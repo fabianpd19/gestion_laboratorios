@@ -1,9 +1,10 @@
-# Sistema de Registro de Uso de Laboratorios
+# Sistema de Gestión de Laboratorios
 
-Sistema universitario para el control y registro del uso de laboratorios, desarrollado con Node.js, Express y Sequelize.
+Sistema universitario para el control y registro del uso de laboratorios, desarrollado con Next.js, Node.js, Express y Sequelize.
 
 ## 🚀 Características
 
+- **Arquitectura Full Stack**: Frontend Next.js + Backend Node.js/Express
 - **Arquitectura Limpia**: Separación por capas (Models, Repositories, Services, Controllers)
 - **Base de Datos**: PostgreSQL con Sequelize ORM
 - **API RESTful**: Endpoints completos para todas las operaciones
@@ -20,75 +21,99 @@ Sistema universitario para el control y registro del uso de laboratorios, desarr
 ## 🛠️ Instalación
 
 1. **Clonar el repositorio**
-   \`\`\`bash
-   git clone <url-del-repositorio>
-   cd registro-uso-laboratorios
-   \`\`\`
+
+   ```bash
+   git clone https://github.com/fabianpd19/gestion_laboratorios.git
+   cd gestion_laboratorios
+   ```
 
 2. **Instalar dependencias**
-   \`\`\`bash
+
+   ```bash
    npm install
-   \`\`\`
+   ```
 
 3. **Configurar variables de entorno**
-   \`\`\`bash
+
+   ```bash
    cp .env.example .env
-
-# Editar .env con tus configuraciones
-
-\`\`\`
+   # Editar .env con tus configuraciones
+   ```
 
 4. **Levantar base de datos con Docker**
-   \`\`\`bash
+
+   ```bash
    npm run db:setup
-   \`\`\`
+   ```
 
-5. **Iniciar el servidor**
-   \`\`\`bash
+5. **Iniciar el sistema**
 
-# Desarrollo
+   **Opción 1: Desarrollo completo (recomendado)**
 
-npm run dev
+   ```bash
+   # Terminal 1: Backend en puerto 3001
+   npm run backend:dev
 
-# Producción
+   # Terminal 2: Frontend en puerto 3000
+   npm run dev
+   ```
 
-npm start
-\`\`\`
+   **Opción 2: Solo backend**
+
+   ```bash
+   npm run dev:backend-only
+   ```
+
+   **Opción 3: Solo frontend**
+
+   ```bash
+   npm run dev:frontend-only
+   ```
+
+## 🌐 Acceso a la aplicación
+
+- **Frontend**: http://localhost:3000
+- **Backend API**: http://localhost:3001
+- **pgAdmin**: http://localhost:8080
+  - Email: admin@lab.com
+  - Password: admin123
 
 ## 🏗️ Estructura del Proyecto
 
-\`\`\`
-registro-uso-laboratorios/
-├── src/
-│ ├── models/ # Modelos de Sequelize
-│ │ ├── usuario.model.js
-│ │ ├── laboratorio.model.js
-│ │ └── usoLaboratorio.model.js
-│ ├── repositories/ # Acceso a datos
-│ │ ├── usuario.repository.js
-│ │ ├── laboratorio.repository.js
-│ │ └── usoLaboratorio.repository.js
-│ ├── services/ # Lógica de negocio
-│ │ ├── usuario.service.js
-│ │ ├── laboratorio.service.js
-│ │ └── usoLaboratorio.service.js
-│ ├── controllers/ # Controladores HTTP
-│ │ ├── usuario.controller.js
-│ │ ├── laboratorio.controller.js
-│ │ └── usoLaboratorio.controller.js
-│ ├── routes/ # Rutas API
-│ │ ├── usuario.routes.js
-│ │ ├── laboratorio.routes.js
-│ │ └── usoLaboratorio.routes.js
-│ └── index.js # Servidor principal
+```
+gestion_laboratorios/
+├── src/                         # Backend
+│   ├── models/                  # Modelos de Sequelize
+│   │   ├── usuario.model.js
+│   │   ├── laboratorio.model.js
+│   │   └── usoLaboratorio.model.js
+│   ├── repositories/            # Acceso a datos
+│   │   ├── usuario.repository.js
+│   │   ├── laboratorio.repository.js
+│   │   └── usoLaboratorio.repository.js
+│   ├── services/                # Lógica de negocio
+│   │   ├── usuario.service.js
+│   │   ├── laboratorio.service.js
+│   │   └── usoLaboratorio.service.js
+│   ├── controllers/             # Controladores HTTP
+│   │   ├── usuario.controller.js
+│   │   ├── laboratorio.controller.js
+│   │   └── usoLaboratorio.controller.js
+│   ├── routes/                  # Rutas API
+│   │   ├── usuario.routes.js
+│   │   ├── laboratorio.routes.js
+│   │   └── usoLaboratorio.routes.js
+│   └── index.js                 # Servidor principal
+├── pages/                       # Frontend Next.js
+├── components/                  # Componentes React
 ├── config/
-│ └── db.js # Configuración de base de datos
+│   └── db.js                    # Configuración de base de datos
 ├── utils/
-│ └── errorHandler.js # Manejo global de errores
-├── docker-compose.yml # Configuración Docker
-├── .env.example # Variables de entorno ejemplo
+│   └── errorHandler.js          # Manejo global de errores
+├── docker-compose.yml           # Configuración Docker
+├── .env.example                 # Variables de entorno ejemplo
 └── package.json
-\`\`\`
+```
 
 ## 📚 API Endpoints
 
@@ -127,102 +152,146 @@ registro-uso-laboratorios/
 
 ### Crear Usuario
 
-\`\`\`bash
-curl -X POST http://localhost:3000/api/usuarios \
- -H "Content-Type: application/json" \
- -d '{
-"nombre": "Juan Pérez",
-"email": "juan@universidad.edu",
-"password": "123456",
-"rol": "docente",
-"programa_academico": "Ingeniería de Sistemas"
-}'
-\`\`\`
+```bash
+curl -X POST http://localhost:3001/api/usuarios \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Juan Pérez",
+    "email": "juan@universidad.edu",
+    "password": "123456",
+    "rol": "docente",
+    "programa_academico": "Ingeniería de Sistemas"
+  }'
+```
 
 ### Crear Laboratorio
 
-\`\`\`bash
-curl -X POST http://localhost:3000/api/laboratorios \
- -H "Content-Type: application/json" \
- -d '{
-"nombre": "Laboratorio de Química",
-"codigo": "LAB-QUI-01",
-"ubicacion": "Edificio A, Piso 2",
-"capacidad_maxima": 25,
-"tipo_laboratorio": "quimica",
-"equipos_disponibles": ["Microscopio", "Balanza", "pH metro"]
-}'
-\`\`\`
+```bash
+curl -X POST http://localhost:3001/api/laboratorios \
+  -H "Content-Type: application/json" \
+  -d '{
+    "nombre": "Laboratorio de Química",
+    "codigo": "LAB-QUI-01",
+    "ubicacion": "Edificio A, Piso 2",
+    "capacidad_maxima": 25,
+    "tipo_laboratorio": "quimica",
+    "equipos_disponibles": ["Microscopio", "Balanza", "pH metro"]
+  }'
+```
 
 ### Registrar Uso
 
-\`\`\`bash
-curl -X POST http://localhost:3000/api/usos \
- -H "Content-Type: application/json" \
- -d '{
-"usuario_id": "uuid-del-usuario",
-"laboratorio_id": "uuid-del-laboratorio",
-"fecha_inicio": "2024-01-20T08:00:00Z",
-"proposito": "Práctica de síntesis orgánica",
-"asignatura": "Química Orgánica",
-"numero_estudiantes": 20,
-"equipos_utilizados": ["Microscopio", "Balanza"]
-}'
-\`\`\`
+```bash
+curl -X POST http://localhost:3001/api/usos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "usuario_id": "uuid-del-usuario",
+    "laboratorio_id": "uuid-del-laboratorio",
+    "fecha_inicio": "2024-01-20T08:00:00Z",
+    "proposito": "Práctica de síntesis orgánica",
+    "asignatura": "Química Orgánica",
+    "numero_estudiantes": 20,
+    "equipos_utilizados": ["Microscopio", "Balanza"]
+  }'
+```
 
 ## 🐳 Docker
 
-### Comandos útiles
+### Comandos disponibles
 
-\`\`\`bash
-
-# Levantar servicios
-
+```bash
+# Levantar servicios de base de datos
 npm run db:setup
 
-# Ver logs
-
+# Ver logs de los contenedores
 docker-compose logs -f
 
 # Parar servicios
-
 npm run db:down
 
-# Reset completo
-
+# Reset completo (elimina volúmenes)
 npm run db:reset
-\`\`\`
+```
 
-### Acceso a pgAdmin
+### Servicios incluidos
 
-- URL: http://localhost:8080
-- Email: admin@lab.com
-- Password: admin123
+- PostgreSQL (puerto 5432)
+- pgAdmin (puerto 8080)
+
+## 📋 Scripts NPM Disponibles
+
+### Desarrollo
+
+```bash
+# Frontend Next.js (puerto 3000)
+npm run dev
+
+# Backend Node.js (puerto 3001)
+npm run backend:dev
+
+# Desarrollo completo (ambos servidores)
+npm run dev:full
+
+# Solo backend con BD
+npm run dev:backend-only
+
+# Solo frontend
+npm run dev:frontend-only
+```
+
+### Producción
+
+```bash
+# Build del frontend
+npm run build
+
+# Iniciar frontend en producción
+npm run start
+
+# Iniciar backend en producción
+npm run backend:start
+```
+
+### Base de datos
+
+```bash
+# Configurar BD con Docker
+npm run db:setup
+
+# Detener BD
+npm run db:down
+
+# Reset completo de BD
+npm run db:reset
+```
+
+### Calidad de código
+
+```bash
+# Ejecutar linter
+npm run lint
+```
 
 ## 🧪 Testing
 
 ### Ejecutar pruebas
 
-\`\`\`bash
+```bash
 npm test
-\`\`\`
+```
 
 ### Probar endpoints con curl
 
-\`\`\`bash
-
+```bash
 # Health check
-
-curl http://localhost:3000/health
+curl http://localhost:3001/health
 
 # Obtener usuarios
-
-curl http://localhost:3000/api/usuarios
+curl http://localhost:3001/api/usuarios
 
 # Obtener laboratorios
-
-curl http://localhost:3000/api/laboratorios
-\`\`\`
+curl http://localhost:3001/api/laboratorios
+```
 
 ## 📊 Modelos de Datos
 
@@ -237,6 +306,8 @@ curl http://localhost:3000/api/laboratorios
 - `programa_academico`: String opcional
 - `telefono`: String opcional
 - `activo`: Boolean
+- `created_at`: DateTime
+- `updated_at`: DateTime
 
 ### Laboratorio
 
@@ -250,12 +321,14 @@ curl http://localhost:3000/api/laboratorios
 - `horario_disponible`: JSON Object
 - `activo`: Boolean
 - `observaciones`: Text
+- `created_at`: DateTime
+- `updated_at`: DateTime
 
 ### UsoLaboratorio
 
 - `id`: UUID (Primary Key)
-- `usuario_id`: UUID (Foreign Key)
-- `laboratorio_id`: UUID (Foreign Key)
+- `usuario_id`: UUID (Foreign Key → Usuario)
+- `laboratorio_id`: UUID (Foreign Key → Laboratorio)
 - `fecha_inicio`: DateTime
 - `fecha_fin`: DateTime opcional
 - `proposito`: String (200 chars)
@@ -266,22 +339,32 @@ curl http://localhost:3000/api/laboratorios
 - `estado`: Enum (programado, en_curso, finalizado, cancelado)
 - `calificacion`: Integer (1-5) opcional
 - `comentarios_finales`: Text opcional
+- `created_at`: DateTime
+- `updated_at`: DateTime
 
 ## 🔧 Configuración de Desarrollo
 
 ### Variables de Entorno
 
-\`\`\`env
+```env
+# Base de datos
 DATABASE_URL=postgresql://lab_user:lab_password@localhost:5432/laboratorios_db
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=laboratorios_db
 DB_USER=lab_user
 DB_PASSWORD=lab_password
+
+# Servidor
 NODE_ENV=development
-PORT=3000
+PORT=3001
+
+# Autenticación (próximamente)
 JWT_SECRET=tu_jwt_secret_muy_seguro_aqui
-\`\`\`
+
+# Next.js
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
 
 ## 🚨 Manejo de Errores
 
@@ -291,6 +374,17 @@ El sistema implementa un manejo robusto de errores:
 - **Errores de Base de Datos**: Duplicados, referencias inexistentes
 - **Errores de Negocio**: Capacidad excedida, estados inválidos
 - **Errores HTTP**: 400, 401, 404, 500
+
+### Estructura de respuesta de error
+
+```json
+{
+  "error": true,
+  "message": "Descripción del error",
+  "details": "Información adicional (opcional)",
+  "code": "ERROR_CODE"
+}
+```
 
 ## 📈 Características Avanzadas
 
@@ -317,26 +411,12 @@ El sistema implementa un manejo robusto de errores:
 5. **Finalización**: Se registra el fin y se evalúa
 6. **Reportes**: Se generan estadísticas y reportes
 
-## 🤝 Contribución
+## 🔮 Próximas Características
 
-1. Fork el proyecto
-2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
-3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push a la rama (`git push origin feature/AmazingFeature`)
-5. Abre un Pull Request
+### En desarrollo
 
-## 📝 Licencia
-
-Este proyecto está bajo la Licencia MIT - ver el archivo [LICENSE](LICENSE) para detalles.
-
-## 📞 Soporte
-
-Para soporte técnico o preguntas:
-
-- Email: soporte@universidad.edu
-- Issues: [GitHub Issues](link-to-issues)
-
----
-
-**Desarrollado con ❤️ para la gestión eficiente de laboratorios universitarios**
-"# gestion_laboratorios" 
+- [ ] Sistema de autenticación JWT
+- [ ] Testing completo (Jest + Supertest)
+- [ ] Notificaciones en tiempo real
+- [ ] Dashboard de administración
+- [ ] Exportación de reportes (PDF/Excel)
