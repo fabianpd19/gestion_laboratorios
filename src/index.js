@@ -9,9 +9,9 @@ const { globalErrorHandler } = require("../utils/errorHandler");
 const usuarioRoutes = require("./routes/usuario.routes");
 const laboratorioRoutes = require("./routes/laboratorio.routes");
 const usoLaboratorioRoutes = require("./routes/usoLaboratorio.routes");
+const bitacoraRoutes = require("./routes/bitacora.routes");
 
 const app = express();
-// IMPORTANTE: Cambiar el puerto por defecto a 3001
 const PORT = process.env.PORT || 3001;
 
 // Middlewares
@@ -29,6 +29,7 @@ app.use((req, res, next) => {
 app.use("/api/usuarios", usuarioRoutes);
 app.use("/api/laboratorios", laboratorioRoutes);
 app.use("/api/usos", usoLaboratorioRoutes);
+app.use("/api/bitacoras", bitacoraRoutes);
 
 // Ruta de salud
 app.get("/health", (req, res) => {
@@ -37,6 +38,12 @@ app.get("/health", (req, res) => {
     message: "Backend API funcionando correctamente",
     timestamp: new Date().toISOString(),
     port: PORT,
+    endpoints: {
+      usuarios: "/api/usuarios",
+      laboratorios: "/api/laboratorios",
+      usos: "/api/usos",
+      bitacoras: "/api/bitacoras",
+    },
   });
 });
 
@@ -66,6 +73,13 @@ const startServer = async () => {
       console.log(`📊 Ambiente: ${process.env.NODE_ENV || "development"}`);
       console.log(`🔗 Health check: http://localhost:${PORT}/health`);
       console.log(`🎯 API Base URL: http://localhost:${PORT}/api`);
+      console.log(`📋 Endpoints disponibles:`);
+      console.log(`   - Usuarios: http://localhost:${PORT}/api/usuarios`);
+      console.log(
+        `   - Laboratorios: http://localhost:${PORT}/api/laboratorios`
+      );
+      console.log(`   - Usos: http://localhost:${PORT}/api/usos`);
+      console.log(`   - Bitácoras: http://localhost:${PORT}/api/bitacoras`);
     });
   } catch (error) {
     console.error("❌ Error al iniciar el servidor:", error);
