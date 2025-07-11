@@ -333,10 +333,13 @@ export function findAvailableLaboratorios(
 
     // Filtro por equipos requeridos
     if (criteria.equiposRequeridos && criteria.equiposRequeridos.length > 0) {
-      const equiposLab = lab.equipos_disponibles || []
+      const equiposLab: (string | { nombre?: string })[] = lab.equipos_disponibles || []
       const tieneEquipos = criteria.equiposRequeridos.every(equipo =>
         equiposLab.some(equipoLab => 
-          equipoLab.toLowerCase().includes(equipo.toLowerCase())
+          (typeof equipoLab === 'string'
+            ? equipoLab.toLowerCase()
+            : (equipoLab.nombre?.toLowerCase?.() || '')
+          ).includes(equipo.toLowerCase())
         )
       )
       if (!tieneEquipos) return false
