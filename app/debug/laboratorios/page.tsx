@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Separator } from '@/components/ui/separator'
 import { laboratorioService } from '@/lib/laboratorio-service'
-import { Laboratorio, CreateLaboratorioData } from '@/lib/types'
+import { Laboratorio, CreateLaboratorioData, Equipo } from '@/lib/types'
 import { 
   validateLaboratorioData, 
   formatLaboratorioForDisplay, 
@@ -53,7 +53,7 @@ export default function DebugLaboratoriosPage() {
         ubicacion: 'Edificio Test, Piso 1',
         capacidad_maxima: 25,
         tipo_laboratorio: 'computacion',
-        equipos_disponibles: ['Computadora', 'Proyector', 'Pizarra Digital'],
+        equipos_disponibles: ['computadora', 'proyector', 'pizarra_digital'] as unknown as Equipo[],
         horario_disponible: {
           lunes: '08:00-18:00',
           martes: '08:00-18:00',
