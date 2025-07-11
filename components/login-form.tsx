@@ -15,7 +15,7 @@ import { AlertCircle } from "lucide-react"
 export function LoginForm() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [userType, setUserType] = useState("")
+  // const [userType, setUserType] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
 
@@ -23,43 +23,43 @@ export function LoginForm() {
   const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError("")
-    setLoading(true)
+  e.preventDefault()
+  setError("")
+  setLoading(true)
 
-    // Simulación de autenticación (aquí irán las APIs del Banner)
-    try {
-      if (!username || !password || !userType) {
-        throw new Error("Todos los campos son obligatorios")
-      }
-
-      // Simulación de usuarios para pruebas
-      const mockUsers = {
-        "docente@universidad.edu": { role: "docente", name: "Dr. Juan Pérez" },
-        "estudiante@universidad.edu": { role: "estudiante", name: "María García" },
-      }
-
-      const user = mockUsers[username as keyof typeof mockUsers]
-
-      if (user && password === "123456" && user.role === userType) {
-        await login({
-          id: "1",
-          username,
-          name: user.name,
-          role: user.role as "docente" | "estudiante",
-          email: username,
-        })
-
-        router.push("/dashboard")
-      } else {
-        throw new Error("Credenciales inválidas")
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Error de autenticación")
-    } finally {
-      setLoading(false)
+  try {
+    if (!username || !password) {
+      throw new Error("Todos los campos son obligatorios")
     }
+
+    const res = await fetch("http://localhost:3001/api/usuarios/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: username, password }),
+    })
+
+    const json = await res.json()
+    if (!res.ok) {
+      throw new Error(json.message || "Error al iniciar sesión")
+    }
+
+    const { token, rol, nombre, id, email } = json.data
+
+  /*   if (rol !== userType) {
+      throw new Error("El tipo de usuario no coincide con el rol asignado")
+    } */
+
+    localStorage.setItem("token", token)
+    await login({ id, username: email, name: nombre, role: rol, email })
+
+    router.push("/dashboard")
+  } catch (err) {
+    setError(err instanceof Error ? err.message : "Error de autenticación")
+  } finally {
+    setLoading(false)
   }
+}
+
 
   return (
     <Card>
@@ -69,7 +69,7 @@ export function LoginForm() {
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
+          {/* <div className="space-y-2">
             <Label htmlFor="userType">Tipo de Usuario</Label>
             <Select value={userType} onValueChange={setUserType}>
               <SelectTrigger>
@@ -80,7 +80,7 @@ export function LoginForm() {
                 <SelectItem value="docente">Docente</SelectItem>
               </SelectContent>
             </Select>
-          </div>
+          </div> */}
 
           <div className="space-y-2">
             <Label htmlFor="username">Usuario/Email</Label>
