@@ -4,7 +4,7 @@ async function testBackend() {
   try {
     console.log("🔍 Verificando conexión al backend...");
 
-    const response = await fetch("http://localhost:3001/health");
+    const response = await fetch("http://localhost:3001");
     const data = await response.json();
 
     if (data.success) {
