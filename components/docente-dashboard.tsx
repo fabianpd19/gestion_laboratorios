@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/auth-context"
 import { BookOpen, Users, FileText, Settings, LogOut, Download } from "lucide-react"
+import { useBitacoras } from "@/hooks/useBitacoras"
+
+
 
 interface User {
   id: string
@@ -29,10 +32,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
     { id: 2, nombre: "Física Experimental", codigo: "FIS-201", estudiantes: 30 },
   ]
 
-  const bitacorasRecientes = [
-    { id: 1, estudiante: "Ana López", practica: "Síntesis de Aspirina", fecha: "2024-01-15", estado: "Completada" },
-    { id: 2, estudiante: "Carlos Ruiz", practica: "Medición de pH", fecha: "2024-01-14", estado: "Pendiente" },
-  ]
+  const { bitacoras, loading } = useBitacoras(user.id)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -92,7 +92,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {bitacorasRecientes.filter((b) => b.estado === "Pendiente").length}
+                    {bitacoras.filter((b) => b.estado === "pendiente").length}
                   </div>
                 </CardContent>
               </Card>
@@ -105,17 +105,17 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {bitacorasRecientes.map((bitacora) => (
+                  {bitacoras.map((bitacora) => (
                     <div key={bitacora.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
-                        <p className="font-medium">{bitacora.estudiante}</p>
-                        <p className="text-sm text-gray-600">{bitacora.practica}</p>
-                        <p className="text-xs text-gray-500">{bitacora.fecha}</p>
+                        <p className="font-medium">{bitacora.titulo_laboratorio}</p>
+                        <p className="text-sm text-gray-600">{bitacora.tema}</p>
+                        <p className="text-xs text-gray-500">{bitacora.fecha_bitacora}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
-                            bitacora.estado === "Completada"
+                            bitacora.estado === "completada"
                               ? "bg-green-100 text-green-800"
                               : "bg-yellow-100 text-yellow-800"
                           }`}
@@ -185,15 +185,15 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                         </tr>
                       </thead>
                       <tbody>
-                        {bitacorasRecientes.map((bitacora) => (
+                        {bitacoras.map((bitacora) => (
                           <tr key={bitacora.id} className="border-t">
-                            <td className="px-4 py-2">{bitacora.estudiante}</td>
-                            <td className="px-4 py-2">{bitacora.practica}</td>
-                            <td className="px-4 py-2">{bitacora.fecha}</td>
+                            <td className="px-4 py-2">{bitacora.nombre_profesor}</td>
+                            <td className="px-4 py-2">{bitacora.tema}</td>
+                            <td className="px-4 py-2">{bitacora.fecha_bitacora}</td>
                             <td className="px-4 py-2">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs ${
-                                  bitacora.estado === "Completada"
+                                  bitacora.estado === "completada"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-yellow-100 text-yellow-800"
                                 }`}
@@ -213,6 +213,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                             </td>
                           </tr>
                         ))}
+
                       </tbody>
                     </table>
                   </div>

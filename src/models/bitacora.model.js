@@ -11,94 +11,154 @@ const Bitacora = sequelize.define(
       defaultValue: DataTypes.UUIDV4,
       primaryKey: true,
     },
-    // Información institucional
+    // Encabezado de la bitácora
+    titulo_laboratorio: {
+      type: DataTypes.STRING(200),
+      allowNull: false,
+      comment: "Bitácora del Laboratorio de xxxxxxxxx",
+    },
     departamento: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
+      comment: "Departamento de XXXXXX",
     },
-    carrera: {
+    fecha_bitacora: {
+      type: DataTypes.DATEONLY,
+      allowNull: false,
+      comment: "Fecha dd/mmm/aaaa",
+    },
+    pagina: {
+      type: DataTypes.STRING(10),
+      allowNull: false,
+      defaultValue: "1 de 1",
+      comment: "Página: 1 de 1",
+    },
+    pao: {
+      type: DataTypes.STRING(50),
+      allowNull: true,
+      comment: "PAO",
+    },
+
+    // Información de la sesión
+    nombre_profesor: {
       type: DataTypes.STRING(100),
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
     },
-    // Información del laboratorio (se obtiene de la relación)
-    nombre_laboratorio: {
-      type: DataTypes.STRING(100),
+    fecha_sesion: {
+      type: DataTypes.DATEONLY,
       allowNull: false,
+      comment: "Fecha(aa-mm-dd)",
     },
-    codigo_laboratorio: {
+    nrc: {
       type: DataTypes.STRING(20),
       allowNull: false,
+      comment: "NRC del curso",
     },
-    // Información del usuario/solicitante (se obtiene de la relación)
-    nombre_solicitante: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-    },
-    // Información de uso
-    fecha_uso_laboratorio: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    materia_asignatura: {
-      type: DataTypes.STRING(100),
-      allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
-    },
-    nivel: {
-      type: DataTypes.STRING(50),
-      allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
-    },
-    numero_usuarios: {
+    numero_alumnos: {
       type: DataTypes.INTEGER,
       allowNull: false,
       validate: {
         min: 1,
       },
+      comment: "Número de alumnos",
     },
-    tema_practica_proyecto: {
+    duracion_sesion: {
+      type: DataTypes.STRING(50),
+      allowNull: false,
+      defaultValue: "dos horas",
+      comment: "Cada sesión de laboratorio es de dos horas",
+    },
+
+    // Contenido académico
+    tema: {
       type: DataTypes.TEXT,
       allowNull: false,
-      validate: {
-        notEmpty: true,
-      },
+      comment: "Tema de la práctica",
     },
-    // Descargo de equipos, materiales, etc.
-    descargo_equipos: {
+    objetivo: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      comment: "Objetivo de la práctica",
+    },
+
+    // Detalles de trabajo
+    mesas_trabajo: {
       type: DataTypes.JSON,
       allowNull: false,
       defaultValue: [],
-      comment: "Array de objetos con {cantidad, detalle}",
+      comment:
+        "Array de mesas con {numero_mesa, alumno_responsable, equipos_entregados, observaciones}",
     },
-    observaciones: {
-      type: DataTypes.TEXT,
+
+    // Control y firmas
+    firma_profesor: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+      comment: "Indica si el profesor ha firmado",
+    },
+    fecha_firma_profesor: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
-    // Campos de control
+
+    // Estados y control
     estado: {
-      type: DataTypes.ENUM("borrador", "enviada", "aprobada", "rechazada"),
+      type: DataTypes.ENUM(
+        "borrador",
+        "en_sesion",
+        "completada",
+        "firmada",
+        "bloqueada",
+        "pendiente"
+      ),
       allowNull: false,
       defaultValue: "borrador",
     },
-    fecha_creacion: {
-      type: DataTypes.DATE,
+    bloqueada: {
+      type: DataTypes.BOOLEAN,
       allowNull: false,
-      defaultValue: DataTypes.NOW,
+      defaultValue: false,
     },
-    fecha_actualizacion: {
+    motivo_bloqueo: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    fecha_bloqueo: {
       type: DataTypes.DATE,
+      allowNull: true,
+    },
+    bloqueada_por: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: Usuario,
+        key: "id",
+      },
+    },
+
+    // Observaciones generales
+    observaciones_generales: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+
+    // Metadatos
+    creada_por: {
+      type: DataTypes.UUID,
       allowNull: false,
-      defaultValue: DataTypes.NOW,
+      references: {
+        model: Usuario,
+        key: "id",
+      },
+    },
+    ultima_modificacion_por: {
+      type: DataTypes.UUID,
+      allowNull: true,
+      references: {
+        model: Usuario,
+        key: "id",
+      },
     },
   },
   {
@@ -106,22 +166,22 @@ const Bitacora = sequelize.define(
     timestamps: true,
     indexes: [
       {
-        fields: ["fecha_uso_laboratorio"],
+        fields: ["fecha_bitacora"],
+      },
+      {
+        fields: ["fecha_sesion"],
       },
       {
         fields: ["estado"],
       },
       {
-        fields: ["usuario_id"],
-      },
-      {
-        fields: ["laboratorio_id"],
+        fields: ["nrc"],
       },
       {
         fields: ["departamento"],
       },
       {
-        fields: ["carrera"],
+        fields: ["bloqueada"],
       },
     ],
   }
@@ -129,8 +189,18 @@ const Bitacora = sequelize.define(
 
 // Definir asociaciones
 Bitacora.belongsTo(Usuario, {
-  foreignKey: "usuario_id",
-  as: "usuario",
+  foreignKey: "creada_por",
+  as: "creador",
+});
+
+Bitacora.belongsTo(Usuario, {
+  foreignKey: "ultima_modificacion_por",
+  as: "ultimo_editor",
+});
+
+Bitacora.belongsTo(Usuario, {
+  foreignKey: "bloqueada_por",
+  as: "bloqueador",
 });
 
 Bitacora.belongsTo(Laboratorio, {
@@ -139,8 +209,8 @@ Bitacora.belongsTo(Laboratorio, {
 });
 
 Usuario.hasMany(Bitacora, {
-  foreignKey: "usuario_id",
-  as: "bitacoras",
+  foreignKey: "creada_por",
+  as: "bitacoras_creadas",
 });
 
 Laboratorio.hasMany(Bitacora, {

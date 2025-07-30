@@ -3,7 +3,17 @@ const bitacoraService = require("../services/bitacora.service");
 class BitacoraController {
   async crear(req, res) {
     try {
-      const bitacora = await bitacoraService.crearBitacora(req.body);
+      // En un sistema real, el usuarioId vendría del token de autenticación
+      const usuarioId = req.body.usuario_id || req.headers["x-user-id"];
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
+      const bitacora = await bitacoraService.crearBitacora(req.body, usuarioId);
       res.status(201).json({
         success: true,
         message: "Bitácora creada exitosamente",
@@ -20,14 +30,14 @@ class BitacoraController {
   async obtenerTodas(req, res) {
     try {
       const filtros = {
-        usuario_id: req.query.usuario_id,
-        laboratorio_id: req.query.laboratorio_id,
-        estado: req.query.estado,
         departamento: req.query.departamento,
-        carrera: req.query.carrera,
+        nrc: req.query.nrc,
+        estado: req.query.estado,
         fecha_inicio: req.query.fecha_inicio,
         fecha_fin: req.query.fecha_fin,
-        busqueda: req.query.busqueda,
+        bloqueada: req.query.bloqueada,
+        creada_por: req.query.creada_por,
+        laboratorio_id: req.query.laboratorio_id,
       };
 
       const bitacoras = await bitacoraService.obtenerBitacoras(filtros);
@@ -60,9 +70,19 @@ class BitacoraController {
 
   async actualizar(req, res) {
     try {
+      const usuarioId = req.body.usuario_id || req.headers["x-user-id"];
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
       const bitacora = await bitacoraService.actualizarBitacora(
         req.params.id,
-        req.body
+        req.body,
+        usuarioId
       );
       res.json({
         success: true,
@@ -79,7 +99,16 @@ class BitacoraController {
 
   async eliminar(req, res) {
     try {
-      await bitacoraService.eliminarBitacora(req.params.id);
+      const usuarioId = req.headers["x-user-id"];
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
+      await bitacoraService.eliminarBitacora(req.params.id, usuarioId);
       res.json({
         success: true,
         message: "Bitácora eliminada exitosamente",
@@ -92,12 +121,24 @@ class BitacoraController {
     }
   }
 
-  async enviar(req, res) {
+  async iniciarSesion(req, res) {
     try {
-      const bitacora = await bitacoraService.enviarBitacora(req.params.id);
+      const usuarioId = req.headers["x-user-id"];
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
+      const bitacora = await bitacoraService.iniciarSesion(
+        req.params.id,
+        usuarioId
+      );
       res.json({
         success: true,
-        message: "Bitácora enviada exitosamente",
+        message: "Sesión iniciada exitosamente",
         data: bitacora,
       });
     } catch (error) {
@@ -108,16 +149,26 @@ class BitacoraController {
     }
   }
 
-  async aprobar(req, res) {
+  async completarSesion(req, res) {
     try {
+      const usuarioId = req.headers["x-user-id"];
       const { observaciones } = req.body;
-      const bitacora = await bitacoraService.aprobarBitacora(
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
+      const bitacora = await bitacoraService.completarSesion(
         req.params.id,
+        usuarioId,
         observaciones
       );
       res.json({
         success: true,
-        message: "Bitácora aprobada exitosamente",
+        message: "Sesión completada exitosamente",
         data: bitacora,
       });
     } catch (error) {
@@ -128,16 +179,24 @@ class BitacoraController {
     }
   }
 
-  async rechazar(req, res) {
+  async firmar(req, res) {
     try {
-      const { observaciones } = req.body;
-      const bitacora = await bitacoraService.rechazarBitacora(
+      const usuarioId = req.headers["x-user-id"];
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
+      const bitacora = await bitacoraService.firmarBitacora(
         req.params.id,
-        observaciones
+        usuarioId
       );
       res.json({
         success: true,
-        message: "Bitácora rechazada",
+        message: "Bitácora firmada exitosamente",
         data: bitacora,
       });
     } catch (error) {
@@ -148,14 +207,105 @@ class BitacoraController {
     }
   }
 
-  async obtenerPorUsuario(req, res) {
+  async bloquear(req, res) {
+    try {
+      const usuarioId = req.headers["x-user-id"];
+      const { motivo } = req.body;
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
+      const bitacora = await bitacoraService.bloquearBitacora(
+        req.params.id,
+        usuarioId,
+        motivo
+      );
+      res.json({
+        success: true,
+        message: "Bitácora bloqueada exitosamente",
+        data: bitacora,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async desbloquear(req, res) {
+    try {
+      const usuarioId = req.headers["x-user-id"];
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
+      const bitacora = await bitacoraService.desbloquearBitacora(
+        req.params.id,
+        usuarioId
+      );
+      res.json({
+        success: true,
+        message: "Bitácora desbloqueada exitosamente",
+        data: bitacora,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async actualizarMesa(req, res) {
+    try {
+      const usuarioId = req.headers["x-user-id"];
+      const numeroMesa = Number.parseInt(req.params.numeroMesa);
+
+      if (!usuarioId) {
+        return res.status(400).json({
+          success: false,
+          message: "ID de usuario requerido",
+        });
+      }
+
+      const bitacora = await bitacoraService.actualizarMesaTrabajo(
+        req.params.id,
+        numeroMesa,
+        req.body,
+        usuarioId
+      );
+      res.json({
+        success: true,
+        message: "Mesa de trabajo actualizada exitosamente",
+        data: bitacora,
+      });
+    } catch (error) {
+      res.status(400).json({
+        success: false,
+        message: error.message,
+      });
+    }
+  }
+
+  async obtenerPorProfesor(req, res) {
     try {
       const filtros = {
         estado: req.query.estado,
+        fecha_inicio: req.query.fecha_inicio,
+        fecha_fin: req.query.fecha_fin,
       };
 
-      const bitacoras = await bitacoraService.obtenerBitacorasUsuario(
-        req.params.usuarioId,
+      const bitacoras = await bitacoraService.obtenerBitacorasPorProfesor(
+        req.params.profesorId,
         filtros
       );
       res.json({
@@ -176,8 +326,8 @@ class BitacoraController {
         fecha_inicio: req.query.fecha_inicio,
         fecha_fin: req.query.fecha_fin,
         departamento: req.query.departamento,
-        carrera: req.query.carrera,
         estado: req.query.estado,
+        nrc: req.query.nrc,
       };
 
       const reporte = await bitacoraService.generarReporte(filtros);

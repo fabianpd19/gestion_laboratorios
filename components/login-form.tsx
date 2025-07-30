@@ -50,7 +50,7 @@ export function LoginForm() {
     } */
 
     localStorage.setItem("token", token)
-    await login({ id, username: email, name: nombre, role: rol, email })
+    await login({ id, username: email, name: nombre, role: rol, email }, token)
 
     router.push("/dashboard")
   } catch (err) {
@@ -118,11 +118,7 @@ export function LoginForm() {
           </Button>
         </form>
 
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
-          <p className="font-medium">Usuarios de prueba:</p>
-          <p>Docente: docente@universidad.edu / 123456</p>
-          <p>Estudiante: estudiante@universidad.edu / 123456</p>
-        </div>
+        
       </CardContent>
     </Card>
   )
