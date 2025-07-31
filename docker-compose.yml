@@ -13,20 +13,6 @@ services:
     networks:
       - lab_network
 
-  postgres_migracion:
-    image: postgres:latest
-    container_name: lab_postgres_migracion
-    environment:
-      POSTGRES_DB: laboratorios_migracion_db
-      POSTGRES_USER: lab_user
-      POSTGRES_PASSWORD: lab_password
-    ports:
-      - "5434:5432" # usa otro puerto para no chocar con el original
-    volumes:
-      - postgres_migracion_data:/var/lib/postgresql/data
-    networks:
-      - lab_network
-
   pgadmin:
     image: dpage/pgadmin4
     container_name: lab_pgadmin
@@ -42,7 +28,6 @@ services:
 
 volumes:
   postgres_data:
-  postgres_migracion_data:
 
 networks:
   lab_network:
