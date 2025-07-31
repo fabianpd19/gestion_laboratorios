@@ -46,7 +46,14 @@ Sistema universitario para el control y registro del uso de laboratorios, desarr
    npm run db:setup
    ```
 
-5. **Iniciar el sistema**
+5. **Aplicar Migraciones**
+
+   ```bash
+   #Una vez levantado el contenedor:
+   npx sequelize-cli db:migrate
+   ```
+
+6. **Iniciar el sistema**
 
    **Opción 1: Desarrollo completo (recomendado)**
 
