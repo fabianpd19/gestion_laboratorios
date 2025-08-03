@@ -20,8 +20,6 @@ class LaboratorioController {
   async obtenerTodos(req, res) {
     try {
       const filtros = {
-        tipo_laboratorio: req.query.tipo,
-        activo: req.query.activo,
         busqueda: req.query.busqueda,
       }
 
@@ -78,22 +76,6 @@ class LaboratorioController {
       })
     } catch (error) {
       res.status(400).json({
-        success: false,
-        message: error.message,
-      })
-    }
-  }
-
-  async obtenerDisponibles(req, res) {
-    try {
-      const { fecha, hora_inicio, hora_fin } = req.query
-      const laboratorios = await laboratorioService.obtenerLaboratoriosDisponibles(fecha, hora_inicio, hora_fin)
-      res.json({
-        success: true,
-        data: laboratorios,
-      })
-    } catch (error) {
-      res.status(500).json({
         success: false,
         message: error.message,
       })

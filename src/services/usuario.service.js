@@ -4,25 +4,19 @@ const bcrypt = require("bcrypt")
 class UsuarioService {
   async crearUsuario(datosUsuario) {
     try {
-      // Validar que el email no exista
-      const usuarioExistente = await usuarioRepository.obtenerPorEmail(datosUsuario.email)
+      // Validar que el correo no exista
+      const usuarioExistente = await usuarioRepository.obtenerPorCorreo(datosUsuario.correo)
       if (usuarioExistente) {
-        throw new Error("El email ya está registrado")
+        throw new Error("El correo ya está registrado")
       }
 
-      // Encriptar contraseña
-      const saltRounds = 10
-      const passwordEncriptada = await bcrypt.hash(datosUsuario.password, saltRounds)
+      // Encriptar contraseña si se proporciona
+      if (datosUsuario.password) {
+        const saltRounds = 10
+        datosUsuario.password = await bcrypt.hash(datosUsuario.password, saltRounds)
+      }
 
-      // Crear usuario
-      const nuevoUsuario = await usuarioRepository.crear({
-        ...datosUsuario,
-        password: passwordEncriptada,
-      })
-
-      // Retornar usuario sin contraseña
-      const { password, ...usuarioSinPassword } = nuevoUsuario.toJSON()
-      return usuarioSinPassword
+      return await usuarioRepository.crear(datosUsuario)
     } catch (error) {
       throw new Error(`Error en servicio de usuario: ${error.message}`)
     }
@@ -70,33 +64,29 @@ class UsuarioService {
     }
   }
 
-  async autenticarUsuario(email, password) {
+  async autenticarUsuario(correo, password) {
     try {
-      const usuario = await usuarioRepository.obtenerPorEmail(email)
+      const usuario = await usuarioRepository.obtenerPorCorreo(correo)
       if (!usuario) {
         throw new Error("Credenciales inválidas")
       }
 
-      const passwordValida = await bcrypt.compare(password, usuario.password)
-      if (!passwordValida) {
-        throw new Error("Credenciales inválidas")
+      if (password && usuario.password) {
+        const passwordValida = await bcrypt.compare(password, usuario.password)
+        if (!passwordValida) {
+          throw new Error("Credenciales inválidas")
+        }
       }
 
-      if (!usuario.activo) {
-        throw new Error("Usuario inactivo")
-      }
-
-      // Retornar usuario sin contraseña
-      const { password: _, ...usuarioSinPassword } = usuario.toJSON()
-      return usuarioSinPassword
+      return usuario
     } catch (error) {
       throw new Error(`Error en autenticación: ${error.message}`)
     }
   }
 
-  async obtenerEstadisticasUsuarios() {
+  async obtenerUsuariosPorRol(rol) {
     try {
-      return await usuarioRepository.contarPorRol()
+      return await usuarioRepository.obtenerPorRol(rol)
     } catch (error) {
       throw new Error(`Error en servicio de usuario: ${error.message}`)
     }

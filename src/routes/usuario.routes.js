@@ -1,17 +1,20 @@
-const express = require("express")
-const usuarioController = require("../controllers/usuario.controller")
+const express = require("express");
+const usuarioController = require("../controllers/usuario.controller");
+const auth = require("../middlewares/auth");
 
-const router = express.Router()
+const router = express.Router();
 
-// Rutas CRUD para usuarios
-router.post("/", usuarioController.crear)
-router.get("/", usuarioController.obtenerTodos)
-router.get("/estadisticas", usuarioController.obtenerEstadisticas)
-router.get("/:id", usuarioController.obtenerPorId)
-router.put("/:id", usuarioController.actualizar)
-router.delete("/:id", usuarioController.eliminar)
+// Rutas públicas
+router.post("/login", usuarioController.login);
+router.post("/", usuarioController.crear); // <-- ahora es pública
 
-// Ruta de autenticación
-router.post("/auth", usuarioController.autenticar)
+// Rutas protegidas (requieren JWT)
+router.use(auth);
 
-module.exports = router
+router.get("/", usuarioController.obtenerTodos);
+router.get("/rol/:rol", usuarioController.obtenerPorRol);
+router.get("/:id", usuarioController.obtenerPorId);
+router.put("/:id", usuarioController.actualizar);
+router.delete("/:id", usuarioController.eliminar);
+
+module.exports = router;

@@ -1,4 +1,6 @@
 const Laboratorio = require("../models/laboratorio.model")
+const Usuario = require("../models/usuario.model")
+const Equipo = require("../models/equipo.model")
 const { Op } = require("sequelize")
 
 class LaboratorioRepository {
@@ -12,19 +14,21 @@ class LaboratorioRepository {
 
   async obtenerPorId(id) {
     try {
-      return await Laboratorio.findByPk(id)
-    } catch (error) {
-      throw new Error(`Error al obtener laboratorio: ${error.message}`)
-    }
-  }
-
-  async obtenerPorCodigo(codigo) {
-    try {
-      return await Laboratorio.findOne({
-        where: { codigo },
+      return await Laboratorio.findByPk(id, {
+        include: [
+          {
+            model: Usuario,
+            as: "responsable",
+            attributes: ["id", "nombre", "correo"],
+          },
+          {
+            model: Equipo,
+            as: "equipos",
+          },
+        ],
       })
     } catch (error) {
-      throw new Error(`Error al buscar laboratorio por código: ${error.message}`)
+      throw new Error(`Error al obtener laboratorio: ${error.message}`)
     }
   }
 
@@ -32,24 +36,22 @@ class LaboratorioRepository {
     try {
       const whereClause = {}
 
-      if (filtros.tipo_laboratorio) {
-        whereClause.tipo_laboratorio = filtros.tipo_laboratorio
-      }
-
-      if (filtros.activo !== undefined) {
-        whereClause.activo = filtros.activo
-      }
-
       if (filtros.busqueda) {
         whereClause[Op.or] = [
           { nombre: { [Op.iLike]: `%${filtros.busqueda}%` } },
-          { codigo: { [Op.iLike]: `%${filtros.busqueda}%` } },
-          { ubicacion: { [Op.iLike]: `%${filtros.busqueda}%` } },
+          { descripcion: { [Op.iLike]: `%${filtros.busqueda}%` } },
         ]
       }
 
       return await Laboratorio.findAll({
         where: whereClause,
+        include: [
+          {
+            model: Usuario,
+            as: "responsable",
+            attributes: ["id", "nombre", "correo"],
+          },
+        ],
         order: [["nombre", "ASC"]],
       })
     } catch (error) {
@@ -86,20 +88,6 @@ class LaboratorioRepository {
       return true
     } catch (error) {
       throw new Error(`Error al eliminar laboratorio: ${error.message}`)
-    }
-  }
-
-  async obtenerDisponibles(fecha, horaInicio, horaFin) {
-    try {
-      // Esta consulta se puede mejorar con lógica más compleja para verificar disponibilidad
-      return await Laboratorio.findAll({
-        where: {
-          activo: true,
-        },
-        order: [["nombre", "ASC"]],
-      })
-    } catch (error) {
-      throw new Error(`Error al obtener laboratorios disponibles: ${error.message}`)
     }
   }
 }

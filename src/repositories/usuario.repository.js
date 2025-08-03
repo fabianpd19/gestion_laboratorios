@@ -12,21 +12,17 @@ class UsuarioRepository {
 
   async obtenerPorId(id) {
     try {
-      return await Usuario.findByPk(id, {
-        attributes: { exclude: ["password"] },
-      })
+      return await Usuario.findByPk(id)
     } catch (error) {
       throw new Error(`Error al obtener usuario: ${error.message}`)
     }
   }
 
-  async obtenerPorEmail(email) {
+  async obtenerPorCorreo(correo) {
     try {
-      return await Usuario.findOne({
-        where: { email },
-      })
+      return await Usuario.findOne({ where: { correo } })
     } catch (error) {
-      throw new Error(`Error al buscar usuario por email: ${error.message}`)
+      throw new Error(`Error al buscar usuario por correo: ${error.message}`)
     }
   }
 
@@ -38,21 +34,16 @@ class UsuarioRepository {
         whereClause.rol = filtros.rol
       }
 
-      if (filtros.activo !== undefined) {
-        whereClause.activo = filtros.activo
-      }
-
       if (filtros.busqueda) {
         whereClause[Op.or] = [
           { nombre: { [Op.iLike]: `%${filtros.busqueda}%` } },
-          { email: { [Op.iLike]: `%${filtros.busqueda}%` } },
+          { correo: { [Op.iLike]: `%${filtros.busqueda}%` } },
         ]
       }
 
       return await Usuario.findAll({
         where: whereClause,
-        attributes: { exclude: ["password"] },
-        order: [["createdAt", "DESC"]],
+        order: [["nombre", "ASC"]],
       })
     } catch (error) {
       throw new Error(`Error al obtener usuarios: ${error.message}`)
@@ -91,15 +82,14 @@ class UsuarioRepository {
     }
   }
 
-  async contarPorRol() {
+  async obtenerPorRol(rol) {
     try {
       return await Usuario.findAll({
-        attributes: ["rol", [Usuario.sequelize.fn("COUNT", Usuario.sequelize.col("id")), "cantidad"]],
-        group: ["rol"],
-        raw: true,
+        where: { rol },
+        order: [["nombre", "ASC"]],
       })
     } catch (error) {
-      throw new Error(`Error al contar usuarios por rol: ${error.message}`)
+      throw new Error(`Error al obtener usuarios por rol: ${error.message}`)
     }
   }
 }

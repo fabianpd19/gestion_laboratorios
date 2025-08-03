@@ -1,12 +1,13 @@
 const express = require("express")
 const laboratorioController = require("../controllers/laboratorio.controller")
+const auth = require("../middlewares/auth")
 
 const router = express.Router()
 
-// Rutas CRUD para laboratorios
+router.use(auth)
+
 router.post("/", laboratorioController.crear)
 router.get("/", laboratorioController.obtenerTodos)
-router.get("/disponibles", laboratorioController.obtenerDisponibles)
 router.get("/:id", laboratorioController.obtenerPorId)
 router.put("/:id", laboratorioController.actualizar)
 router.delete("/:id", laboratorioController.eliminar)

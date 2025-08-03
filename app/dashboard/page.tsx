@@ -1,5 +1,4 @@
 "use client"
-
 import { useAuth } from "@/contexts/auth-context"
 import { useRouter } from "next/navigation"
 import { useEffect } from "react"
@@ -31,9 +30,18 @@ export default function DashboardPage() {
     return null
   }
 
+  // Debugging: Log user data to console
+  console.log("Usuario en dashboard:", user)
+  console.log("Tipo de rol:", typeof user.role)
+  console.log("Rol del usuario:", user.role)
+
   return (
     <div className="min-h-screen bg-gray-50">
-      {user.role === "docente" ? <DocenteDashboard user={user} /> : <EstudianteDashboard user={user} />}
+      {user.role === "docente" ? (
+        <DocenteDashboard user={user} />
+      ) : (
+        <EstudianteDashboard user={user} />
+      )}
     </div>
   )
 }

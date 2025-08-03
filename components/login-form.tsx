@@ -1,24 +1,19 @@
 "use client"
-
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useAuth } from "@/contexts/auth-context"
 import { AlertCircle } from "lucide-react"
 
 export function LoginForm() {
   const [username, setUsername] = useState("")
   const [password, setPassword] = useState("")
-  const [userType, setUserType] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-
   const { login } = useAuth()
   const router = useRouter()
 
@@ -26,35 +21,68 @@ export function LoginForm() {
     e.preventDefault()
     setError("")
     setLoading(true)
-
-    // Simulación de autenticación (aquí irán las APIs del Banner)
+    
     try {
-      if (!username || !password || !userType) {
+      if (!username || !password) {
         throw new Error("Todos los campos son obligatorios")
       }
 
-      // Simulación de usuarios para pruebas
-      const mockUsers = {
-        "docente@universidad.edu": { role: "docente", name: "Dr. Juan Pérez" },
-        "estudiante@universidad.edu": { role: "estudiante", name: "María García" },
+      const res = await fetch("http://localhost:3001/api/usuarios/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ correo: username, password }),
+      })
+
+      const json = await res.json()
+      
+      if (!res.ok) {
+        throw new Error(json.message || "Error al iniciar sesión")
       }
 
-      const user = mockUsers[username as keyof typeof mockUsers]
+      console.log("Respuesta completa del backend:", json)
+      console.log("Datos recibidos:", json.data)
 
-      if (user && password === "123456" && user.role === userType) {
-        await login({
-          id: "1",
-          username,
-          name: user.name,
-          role: user.role as "docente" | "estudiante",
-          email: username,
-        })
+      const { token, usuario } = json.data
+      const { rol, nombre, id, correo } = usuario  // ← Extraer desde usuario
 
-        router.push("/dashboard")
-      } else {
-        throw new Error("Credenciales inválidas")
+      // Debug: mostrar cada campo individualmente
+      console.log("Token:", token)
+      console.log("Rol:", rol) 
+      console.log("Nombre:", nombre)
+      console.log("ID:", id)
+      console.log("Correo:", correo)
+
+      // Validar que los datos necesarios estén presentes
+      const missingFields = []
+      if (!token) missingFields.push("token")
+      if (!rol) missingFields.push("rol") 
+      if (!nombre) missingFields.push("nombre")
+      if (!id) missingFields.push("id")
+      if (!correo) missingFields.push("correo")
+
+      if (missingFields.length > 0) {
+        throw new Error(`Datos de usuario incompletos. Faltan: ${missingFields.join(", ")}`)
       }
+
+      // Crear objeto de usuario con la estructura correcta
+      const userData = {
+        id: id.toString(), // Asegurar que sea string
+        username: correo,  // Usar correo como username
+        name: nombre,
+        role: rol as "docente" | "estudiante", // Type assertion para TypeScript
+        email: correo      // Mapear correo a email
+      }
+
+      console.log("Datos del usuario a guardar:", userData) // Para debug
+
+      // Guardar en el contexto
+      await login(userData, token)
+      
+      // Redireccionar al dashboard
+      router.push("/dashboard")
+      
     } catch (err) {
+      console.error("Error en login:", err)
       setError(err instanceof Error ? err.message : "Error de autenticación")
     } finally {
       setLoading(false)
@@ -70,19 +98,6 @@ export function LoginForm() {
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="userType">Tipo de Usuario</Label>
-            <Select value={userType} onValueChange={setUserType}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona tu rol" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="estudiante">Estudiante</SelectItem>
-                <SelectItem value="docente">Docente</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="space-y-2">
             <Label htmlFor="username">Usuario/Email</Label>
             <Input
               id="username"
@@ -93,7 +108,6 @@ export function LoginForm() {
               required
             />
           </div>
-
           <div className="space-y-2">
             <Label htmlFor="password">Contraseña</Label>
             <Input
@@ -105,24 +119,16 @@ export function LoginForm() {
               required
             />
           </div>
-
           {error && (
             <div className="flex items-center gap-2 text-red-600 text-sm">
               <AlertCircle className="w-4 h-4" />
               {error}
             </div>
           )}
-
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Iniciando sesión..." : "Iniciar Sesión"}
           </Button>
         </form>
-
-        <div className="mt-4 p-3 bg-blue-50 rounded-lg text-sm text-blue-700">
-          <p className="font-medium">Usuarios de prueba:</p>
-          <p>Docente: docente@universidad.edu / 123456</p>
-          <p>Estudiante: estudiante@universidad.edu / 123456</p>
-        </div>
       </CardContent>
     </Card>
   )
