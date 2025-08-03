@@ -1,23 +1,15 @@
 const { DataTypes } = require("sequelize")
 const { sequelize } = require("../../config/db")
 
-const UsoLaboratorio = sequelize.define(
-  "UsoLaboratorio",
+const InscripcionAsignatura = sequelize.define(
+  "InscripcionAsignatura",
   {
     id: {
       type: DataTypes.INTEGER,
       primaryKey: true,
       autoIncrement: true,
     },
-    laboratorio_id: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-      references: {
-        model: "laboratorios",
-        key: "id",
-      },
-    },
-    usuario_id: {
+    estudiante_id: {
       type: DataTypes.INTEGER,
       allowNull: false,
       references: {
@@ -25,15 +17,19 @@ const UsoLaboratorio = sequelize.define(
         key: "id",
       },
     },
-    fecha_uso: {
-      type: DataTypes.DATE,
+    asignatura_id: {
+      type: DataTypes.INTEGER,
       allowNull: false,
+      references: {
+        model: "asignaturas",
+        key: "id",
+      },
     },
   },
   {
-    tableName: "usos_laboratorio",
+    tableName: "inscripciones_asignaturas",
     timestamps: true,
   },
 )
 
-module.exports = UsoLaboratorio
+module.exports = InscripcionAsignatura

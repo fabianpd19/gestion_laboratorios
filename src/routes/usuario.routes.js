@@ -1,18 +1,18 @@
 const express = require("express");
 const usuarioController = require("../controllers/usuario.controller");
-const verificarToken = require("../middlewares/auth");
+const auth = require("../middlewares/auth");
 
 const router = express.Router();
 
 // Rutas públicas
-router.post("/auth", usuarioController.autenticar);
-router.post("/", usuarioController.crear);
+router.post("/login", usuarioController.login);
+router.post("/", usuarioController.crear); // <-- ahora es pública
 
-// Rutas protegidas
-router.use(verificarToken); // Desde aquí, todas las rutas requieren token
+// Rutas protegidas (requieren JWT)
+router.use(auth);
 
 router.get("/", usuarioController.obtenerTodos);
-router.get("/estadisticas", usuarioController.obtenerEstadisticas);
+router.get("/rol/:rol", usuarioController.obtenerPorRol);
 router.get("/:id", usuarioController.obtenerPorId);
 router.put("/:id", usuarioController.actualizar);
 router.delete("/:id", usuarioController.eliminar);

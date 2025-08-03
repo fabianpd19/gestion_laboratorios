@@ -1,186 +1,238 @@
-const bitacoraRepository = require("../repositories/bitacora.repository");
-const usuarioService = require("./usuario.service");
-const laboratorioService = require("./laboratorio.service");
+const bitacoraRepository = require("../repositories/bitacora.repository")
+const usuarioService = require("./usuario.service")
+const laboratorioService = require("./laboratorio.service")
 
 class BitacoraService {
   async crearBitacora(datosBitacora) {
     try {
-      // Validar que el usuario existe
-      const usuario = await usuarioService.obtenerUsuario(
-        datosBitacora.usuario_id
-      );
-
-      // Validar que el laboratorio existe
-      const laboratorio = await laboratorioService.obtenerLaboratorio(
-        datosBitacora.laboratorio_id
-      );
-
-      // Completar datos automáticamente
-      const bitacoraCompleta = {
-        ...datosBitacora,
-        nombre_solicitante: usuario.nombre,
-        nombre_laboratorio: laboratorio.nombre,
-        codigo_laboratorio: laboratorio.codigo,
-        fecha_creacion: new Date(),
-        fecha_actualizacion: new Date(),
-      };
-
-      // Validar campos requeridos
-      this.validarCamposRequeridos(bitacoraCompleta);
-
-      // Validar formato de descargo de equipos
-      this.validarDescargoEquipos(bitacoraCompleta.descargo_equipos);
-
-      return await bitacoraRepository.crear(bitacoraCompleta);
+      return await bitacoraRepository.crear(datosBitacora)
     } catch (error) {
-      throw new Error(`Error en servicio de bitácora: ${error.message}`);
+      throw new Error(`Error en servicio de bitácora: ${error.message}`)
     }
   }
 
   async obtenerBitacora(id) {
     try {
-      const bitacora = await bitacoraRepository.obtenerPorId(id);
+      const bitacora = await bitacoraRepository.obtenerPorId(id)
       if (!bitacora) {
-        throw new Error("Bitácora no encontrada");
+        throw new Error("Bitácora no encontrada")
       }
-      return bitacora;
+      return bitacora
     } catch (error) {
-      throw new Error(`Error en servicio de bitácora: ${error.message}`);
+      throw new Error(`Error en servicio de bitácora: ${error.message}`)
     }
   }
 
   async obtenerBitacoras(filtros = {}) {
     try {
-      return await bitacoraRepository.obtenerTodas(filtros);
+      return await bitacoraRepository.obtenerTodas(filtros)
     } catch (error) {
-      throw new Error(`Error en servicio de bitácora: ${error.message}`);
+      throw new Error(`Error en servicio de bitácora: ${error.message}`)
     }
   }
 
   async actualizarBitacora(id, datosActualizacion) {
     try {
-      // Verificar que la bitácora existe
-      const bitacoraExistente = await this.obtenerBitacora(id);
-
-      // Validar que se puede editar (solo borradores)
-      if (
-        bitacoraExistente.estado !== "borrador" &&
-        datosActualizacion.estado !== "borrador"
-      ) {
-        throw new Error("Solo se pueden editar bitácoras en estado borrador");
-      }
-
-      // Si se actualiza laboratorio, actualizar datos relacionados
-      if (
-        datosActualizacion.laboratorio_id &&
-        datosActualizacion.laboratorio_id !== bitacoraExistente.laboratorio_id
-      ) {
-        const laboratorio = await laboratorioService.obtenerLaboratorio(
-          datosActualizacion.laboratorio_id
-        );
-        datosActualizacion.nombre_laboratorio = laboratorio.nombre;
-        datosActualizacion.codigo_laboratorio = laboratorio.codigo;
-      }
-
-      // Validar descargo de equipos si se proporciona
-      if (datosActualizacion.descargo_equipos) {
-        this.validarDescargoEquipos(datosActualizacion.descargo_equipos);
-      }
-
-      return await bitacoraRepository.actualizar(id, datosActualizacion);
+      return await bitacoraRepository.actualizar(id, datosActualizacion)
     } catch (error) {
-      throw new Error(`Error en servicio de bitácora: ${error.message}`);
+      throw new Error(`Error en servicio de bitácora: ${error.message}`)
     }
   }
 
   async eliminarBitacora(id) {
     try {
-      // Verificar que la bitácora existe y está en borrador
-      const bitacora = await this.obtenerBitacora(id);
+      return await bitacoraRepository.eliminar(id)
+    } catch (error) {
+      throw new Error(`Error en servicio de bitácora: ${error.message}`)
+    }
+  }
+
+  async iniciarSesion(id, usuarioId) {
+    try {
+      const bitacora = await this.obtenerBitacora(id)
 
       if (bitacora.estado !== "borrador") {
-        throw new Error("Solo se pueden eliminar bitácoras en estado borrador");
+        throw new Error("Solo se pueden iniciar sesiones de bitácoras en borrador")
       }
 
-      return await bitacoraRepository.eliminar(id);
-    } catch (error) {
-      throw new Error(`Error en servicio de bitácora: ${error.message}`);
-    }
-  }
-
-  async enviarBitacora(id) {
-    try {
-      const bitacora = await this.obtenerBitacora(id);
-
-      if (bitacora.estado !== "borrador") {
-        throw new Error("Solo se pueden enviar bitácoras en estado borrador");
-      }
-
-      // Validar que todos los campos estén completos
-      this.validarBitacoraCompleta(bitacora);
-
-      return await bitacoraRepository.actualizar(id, {
-        estado: "enviada",
-      });
-    } catch (error) {
-      throw new Error(`Error al enviar bitácora: ${error.message}`);
-    }
-  }
-
-  async aprobarBitacora(id, observaciones = "") {
-    try {
-      const bitacora = await this.obtenerBitacora(id);
-
-      if (bitacora.estado !== "enviada") {
-        throw new Error("Solo se pueden aprobar bitácoras enviadas");
+      if (bitacora.bloqueada) {
+        throw new Error("No se puede iniciar sesión de una bitácora bloqueada")
       }
 
       return await bitacoraRepository.actualizar(id, {
-        estado: "aprobada",
-        observaciones: observaciones || bitacora.observaciones,
-      });
+        estado: "en_sesion",
+        ultima_modificacion_por: usuarioId,
+      })
     } catch (error) {
-      throw new Error(`Error al aprobar bitácora: ${error.message}`);
+      throw new Error(`Error al iniciar sesión: ${error.message}`)
     }
   }
 
-  async rechazarBitacora(id, observaciones) {
+  async completarSesion(id, usuarioId, observaciones = "") {
     try {
-      const bitacora = await this.obtenerBitacora(id);
+      const bitacora = await this.obtenerBitacora(id)
 
-      if (bitacora.estado !== "enviada") {
-        throw new Error("Solo se pueden rechazar bitácoras enviadas");
-      }
-
-      if (!observaciones) {
-        throw new Error(
-          "Las observaciones son requeridas para rechazar una bitácora"
-        );
+      if (bitacora.estado !== "en_sesion") {
+        throw new Error("Solo se pueden completar sesiones en curso")
       }
 
       return await bitacoraRepository.actualizar(id, {
-        estado: "rechazada",
-        observaciones,
-      });
+        estado: "completada",
+        observaciones_generales: observaciones,
+        ultima_modificacion_por: usuarioId,
+      })
     } catch (error) {
-      throw new Error(`Error al rechazar bitácora: ${error.message}`);
+      throw new Error(`Error al completar sesión: ${error.message}`)
     }
   }
 
-  async obtenerBitacorasUsuario(usuarioId, filtros = {}) {
+  async firmarBitacora(id, usuarioId) {
     try {
-      return await bitacoraRepository.obtenerPorUsuario(usuarioId, filtros);
+      const bitacora = await this.obtenerBitacora(id)
+
+      if (bitacora.estado !== "completada") {
+        throw new Error("Solo se pueden firmar bitácoras completadas")
+      }
+
+      if (bitacora.bloqueada) {
+        throw new Error("No se puede firmar una bitácora bloqueada")
+      }
+
+      // Verificar que es el profesor responsable
+      if (bitacora.creada_por !== usuarioId) {
+        const usuario = await usuarioService.obtenerUsuario(usuarioId)
+        if (usuario.rol !== "jefe_laboratorio") {
+          throw new Error("Solo el profesor responsable o jefe de laboratorio puede firmar")
+        }
+      }
+
+      return await bitacoraRepository.actualizar(id, {
+        firma_profesor: true,
+        fecha_firma_profesor: new Date(),
+        estado: "firmada",
+        ultima_modificacion_por: usuarioId,
+      })
     } catch (error) {
-      throw new Error(`Error en servicio de bitácora: ${error.message}`);
+      throw new Error(`Error al firmar bitácora: ${error.message}`)
+    }
+  }
+
+  async bloquearBitacora(id, usuarioId, motivo) {
+    try {
+      // Solo jefes de laboratorio pueden bloquear
+      const usuario = await usuarioService.obtenerUsuario(usuarioId)
+      if (usuario.rol !== "jefe_laboratorio") {
+        throw new Error("Solo el jefe de laboratorio puede bloquear bitácoras")
+      }
+
+      if (!motivo) {
+        throw new Error("El motivo de bloqueo es requerido")
+      }
+
+      const bitacora = await this.obtenerBitacora(id)
+
+      if (bitacora.bloqueada) {
+        throw new Error("La bitácora ya está bloqueada")
+      }
+
+      return await bitacoraRepository.actualizar(id, {
+        bloqueada: true,
+        motivo_bloqueo: motivo,
+        fecha_bloqueo: new Date(),
+        bloqueada_por: usuarioId,
+        estado: "bloqueada",
+        ultima_modificacion_por: usuarioId,
+      })
+    } catch (error) {
+      throw new Error(`Error al bloquear bitácora: ${error.message}`)
+    }
+  }
+
+  async desbloquearBitacora(id, usuarioId) {
+    try {
+      // Solo jefes de laboratorio pueden desbloquear
+      const usuario = await usuarioService.obtenerUsuario(usuarioId)
+      if (usuario.rol !== "jefe_laboratorio") {
+        throw new Error("Solo el jefe de laboratorio puede desbloquear bitácoras")
+      }
+
+      const bitacora = await this.obtenerBitacora(id)
+
+      if (!bitacora.bloqueada) {
+        throw new Error("La bitácora no está bloqueada")
+      }
+
+      // Determinar el estado anterior
+      let estadoAnterior = "borrador"
+      if (bitacora.firma_profesor) {
+        estadoAnterior = "firmada"
+      } else if (bitacora.observaciones_generales) {
+        estadoAnterior = "completada"
+      }
+
+      return await bitacoraRepository.actualizar(id, {
+        bloqueada: false,
+        motivo_bloqueo: null,
+        fecha_bloqueo: null,
+        bloqueada_por: null,
+        estado: estadoAnterior,
+        ultima_modificacion_por: usuarioId,
+      })
+    } catch (error) {
+      throw new Error(`Error al desbloquear bitácora: ${error.message}`)
+    }
+  }
+
+  async actualizarMesaTrabajo(id, numeroMesa, datosMesa, usuarioId) {
+    try {
+      const bitacora = await this.obtenerBitacora(id)
+
+      if (bitacora.bloqueada) {
+        throw new Error("No se puede editar una bitácora bloqueada")
+      }
+
+      if (bitacora.estado === "firmada") {
+        throw new Error("No se puede editar una bitácora firmada")
+      }
+
+      // Validar datos de la mesa
+      this.validarDatosMesa(datosMesa)
+
+      // Actualizar la mesa específica
+      const mesasActualizadas = [...bitacora.mesas_trabajo]
+      const indiceMesa = mesasActualizadas.findIndex((mesa) => mesa.numero_mesa === numeroMesa)
+
+      if (indiceMesa === -1) {
+        throw new Error("Mesa de trabajo no encontrada")
+      }
+
+      mesasActualizadas[indiceMesa] = {
+        ...mesasActualizadas[indiceMesa],
+        ...datosMesa,
+        numero_mesa: numeroMesa, // Asegurar que no se cambie el número
+      }
+
+      return await bitacoraRepository.actualizar(id, {
+        mesas_trabajo: mesasActualizadas,
+        ultima_modificacion_por: usuarioId,
+      })
+    } catch (error) {
+      throw new Error(`Error al actualizar mesa de trabajo: ${error.message}`)
+    }
+  }
+
+  async obtenerBitacorasPorProfesor(profesorId, filtros = {}) {
+    try {
+      return await bitacoraRepository.obtenerPorCreador(profesorId, filtros)
+    } catch (error) {
+      throw new Error(`Error al obtener bitácoras del profesor: ${error.message}`)
     }
   }
 
   async generarReporte(filtros = {}) {
     try {
-      const bitacoras = await this.obtenerBitacoras(filtros);
-      const estadisticas = await bitacoraRepository.obtenerEstadisticas(
-        filtros
-      );
+      const bitacoras = await this.obtenerBitacoras(filtros)
+      const estadisticas = await bitacoraRepository.obtenerEstadisticas(filtros)
 
       return {
         bitacoras,
@@ -188,72 +240,32 @@ class BitacoraService {
         resumen: {
           total_bitacoras: bitacoras.length,
           borradores: bitacoras.filter((b) => b.estado === "borrador").length,
-          enviadas: bitacoras.filter((b) => b.estado === "enviada").length,
-          aprobadas: bitacoras.filter((b) => b.estado === "aprobada").length,
-          rechazadas: bitacoras.filter((b) => b.estado === "rechazada").length,
-          promedio_usuarios:
-            bitacoras.reduce((sum, b) => sum + b.numero_usuarios, 0) /
-              bitacoras.length || 0,
+          en_sesion: bitacoras.filter((b) => b.estado === "en_sesion").length,
+          completadas: bitacoras.filter((b) => b.estado === "completada").length,
+          firmadas: bitacoras.filter((b) => b.estado === "firmada").length,
+          bloqueadas: bitacoras.filter((b) => b.bloqueada).length,
+          promedio_alumnos: bitacoras.reduce((sum, b) => sum + b.numero_alumnos, 0) / bitacoras.length || 0,
         },
-      };
+      }
     } catch (error) {
-      throw new Error(`Error al generar reporte: ${error.message}`);
+      throw new Error(`Error al generar reporte: ${error.message}`)
     }
   }
 
-  // Métodos de validación
-  validarCamposRequeridos(bitacora) {
-    const camposRequeridos = [
-      "departamento",
-      "carrera",
-      "fecha_uso_laboratorio",
-      "materia_asignatura",
-      "nivel",
-      "numero_usuarios",
-      "tema_practica_proyecto",
-    ];
-
-    for (const campo of camposRequeridos) {
-      if (!bitacora[campo]) {
-        throw new Error(`El campo ${campo} es requerido`);
-      }
-    }
-  }
-
-  validarDescargoEquipos(descargo) {
-    if (!Array.isArray(descargo)) {
-      throw new Error("El descargo de equipos debe ser un array");
+  // Métodos de validación y utilidad
+  validarDatosMesa(mesa) {
+    if (!mesa.numero_mesa) {
+      throw new Error("El número de mesa es requerido")
     }
 
-    for (const item of descargo) {
-      if (!item.cantidad || !item.detalle) {
-        throw new Error("Cada item del descargo debe tener cantidad y detalle");
-      }
-
-      if (typeof item.cantidad !== "number" || item.cantidad <= 0) {
-        throw new Error("La cantidad debe ser un número mayor a 0");
-      }
-
-      if (
-        typeof item.detalle !== "string" ||
-        item.detalle.trim().length === 0
-      ) {
-        throw new Error("El detalle no puede estar vacío");
-      }
-    }
-  }
-
-  validarBitacoraCompleta(bitacora) {
-    this.validarCamposRequeridos(bitacora);
-
-    if (!bitacora.descargo_equipos || bitacora.descargo_equipos.length === 0) {
-      throw new Error(
-        "Debe especificar al menos un equipo, material o reactivo"
-      );
+    if (!mesa.alumno_responsable || mesa.alumno_responsable.trim().length === 0) {
+      throw new Error("El alumno responsable es requerido")
     }
 
-    this.validarDescargoEquipos(bitacora.descargo_equipos);
+    if (!Array.isArray(mesa.equipos_entregados)) {
+      throw new Error("Los equipos entregados deben ser un array")
+    }
   }
 }
 
-module.exports = new BitacoraService();
+module.exports = new BitacoraService()

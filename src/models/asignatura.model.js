@@ -1,8 +1,8 @@
 const { DataTypes } = require("sequelize")
 const { sequelize } = require("../../config/db")
 
-const Usuario = sequelize.define(
-  "Usuario",
+const Asignatura = sequelize.define(
+  "Asignatura",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -13,26 +13,15 @@ const Usuario = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    correo: {
+    codigo: {
       type: DataTypes.STRING,
       allowNull: false,
-      unique: true,
-      validate: {
-        isEmail: true,
-      },
-    },
-    rol: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      validate: {
-        isIn: [["estudiante", "docente", "admin"]],
-      },
     },
   },
   {
-    tableName: "usuarios",
+    tableName: "asignaturas",
     timestamps: true,
   },
 )
 
-module.exports = Usuario
+module.exports = Asignatura

@@ -1,13 +1,13 @@
-const laboratorioService = require("../services/laboratorio.service")
+const equipoService = require("../services/equipo.service")
 
-class LaboratorioController {
+class EquipoController {
   async crear(req, res) {
     try {
-      const laboratorio = await laboratorioService.crearLaboratorio(req.body)
+      const equipo = await equipoService.crearEquipo(req.body)
       res.status(201).json({
         success: true,
-        message: "Laboratorio creado exitosamente",
-        data: laboratorio,
+        message: "Equipo creado exitosamente",
+        data: equipo,
       })
     } catch (error) {
       res.status(400).json({
@@ -20,13 +20,14 @@ class LaboratorioController {
   async obtenerTodos(req, res) {
     try {
       const filtros = {
+        laboratorio_id: req.query.laboratorio_id,
         busqueda: req.query.busqueda,
       }
 
-      const laboratorios = await laboratorioService.obtenerLaboratorios(filtros)
+      const equipos = await equipoService.obtenerEquipos(filtros)
       res.json({
         success: true,
-        data: laboratorios,
+        data: equipos,
       })
     } catch (error) {
       res.status(500).json({
@@ -38,10 +39,10 @@ class LaboratorioController {
 
   async obtenerPorId(req, res) {
     try {
-      const laboratorio = await laboratorioService.obtenerLaboratorio(req.params.id)
+      const equipo = await equipoService.obtenerEquipo(req.params.id)
       res.json({
         success: true,
-        data: laboratorio,
+        data: equipo,
       })
     } catch (error) {
       res.status(404).json({
@@ -53,11 +54,11 @@ class LaboratorioController {
 
   async actualizar(req, res) {
     try {
-      const laboratorio = await laboratorioService.actualizarLaboratorio(req.params.id, req.body)
+      const equipo = await equipoService.actualizarEquipo(req.params.id, req.body)
       res.json({
         success: true,
-        message: "Laboratorio actualizado exitosamente",
-        data: laboratorio,
+        message: "Equipo actualizado exitosamente",
+        data: equipo,
       })
     } catch (error) {
       res.status(400).json({
@@ -69,10 +70,10 @@ class LaboratorioController {
 
   async eliminar(req, res) {
     try {
-      await laboratorioService.eliminarLaboratorio(req.params.id)
+      await equipoService.eliminarEquipo(req.params.id)
       res.json({
         success: true,
-        message: "Laboratorio eliminado exitosamente",
+        message: "Equipo eliminado exitosamente",
       })
     } catch (error) {
       res.status(400).json({
@@ -81,6 +82,22 @@ class LaboratorioController {
       })
     }
   }
+
+  async obtenerPorLaboratorio(req, res) {
+    try {
+      const { laboratorioId } = req.params
+      const equipos = await equipoService.obtenerEquiposPorLaboratorio(laboratorioId)
+      res.json({
+        success: true,
+        data: equipos,
+      })
+    } catch (error) {
+      res.status(500).json({
+        success: false,
+        message: error.message,
+      })
+    }
+  }
 }
 
-module.exports = new LaboratorioController()
+module.exports = new EquipoController()

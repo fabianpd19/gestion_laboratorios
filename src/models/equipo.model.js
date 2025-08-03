@@ -1,8 +1,8 @@
 const { DataTypes } = require("sequelize")
 const { sequelize } = require("../../config/db")
 
-const Laboratorio = sequelize.define(
-  "Laboratorio",
+const Equipo = sequelize.define(
+  "Equipo",
   {
     id: {
       type: DataTypes.INTEGER,
@@ -13,23 +13,19 @@ const Laboratorio = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    descripcion: {
-      type: DataTypes.TEXT,
-      allowNull: true,
-    },
-    responsable_id: {
+    laboratorio_id: {
       type: DataTypes.INTEGER,
-      allowNull: true,
+      allowNull: false,
       references: {
-        model: "usuarios",
+        model: "laboratorios",
         key: "id",
       },
     },
   },
   {
-    tableName: "laboratorios",
+    tableName: "equipos",
     timestamps: true,
   },
 )
 
-module.exports = Laboratorio
+module.exports = Equipo

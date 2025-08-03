@@ -1,18 +1,35 @@
-const jwt = require("jsonwebtoken");
-const SECRET = process.env.JWT_SECRET;
+const jwt = require("jsonwebtoken")
+const Usuario = require("../models/usuario.model")
 
-function verificarToken(req, res, next) {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(403).json({ mensaje: "Token requerido" });
+const auth = async (req, res, next) => {
+  try {
+    const token = req.header("Authorization")?.replace("Bearer ", "")
 
-  const token = authHeader.split(" ")[1]; // Bearer <token>
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "Token de acceso requerido",
+      })
+    }
 
-  jwt.verify(token, SECRET, (err, usuario) => {
-    if (err) return res.status(403).json({ mensaje: "Token inválido" });
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || "secret_key")
+    const usuario = await Usuario.findByPk(decoded.id)
 
-    req.usuario = usuario; // El payload del token
-    next();
-  });
+    if (!usuario) {
+      return res.status(401).json({
+        success: false,
+        message: "Token inválido",
+      })
+    }
+
+    req.user = usuario
+    next()
+  } catch (error) {
+    res.status(401).json({
+      success: false,
+      message: "Token inválido",
+    })
+  }
 }
 
-module.exports = verificarToken;
+module.exports = auth

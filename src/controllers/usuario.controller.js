@@ -1,4 +1,5 @@
 const usuarioService = require("../services/usuario.service")
+const jwt = require("jsonwebtoken")
 
 class UsuarioController {
   async crear(req, res) {
@@ -21,7 +22,6 @@ class UsuarioController {
     try {
       const filtros = {
         rol: req.query.rol,
-        activo: req.query.activo,
         busqueda: req.query.busqueda,
       }
 
@@ -84,14 +84,29 @@ class UsuarioController {
     }
   }
 
-  async autenticar(req, res) {
+  async login(req, res) {
     try {
-      const { email, password } = req.body
-      const usuario = await usuarioService.autenticarUsuario(email, password)
+      const { correo, password } = req.body
+      const usuario = await usuarioService.autenticarUsuario(correo, password)
+
+      // Generar JWT token
+      const token = jwt.sign(
+        {
+          id: usuario.id,
+          correo: usuario.correo,
+          rol: usuario.rol,
+        },
+        process.env.JWT_SECRET || "secret_key",
+        { expiresIn: "24h" },
+      )
+
       res.json({
         success: true,
         message: "Autenticación exitosa",
-        data: usuario,
+        data: {
+          usuario,
+          token,
+        },
       })
     } catch (error) {
       res.status(401).json({
@@ -101,12 +116,13 @@ class UsuarioController {
     }
   }
 
-  async obtenerEstadisticas(req, res) {
+  async obtenerPorRol(req, res) {
     try {
-      const estadisticas = await usuarioService.obtenerEstadisticasUsuarios()
+      const { rol } = req.params
+      const usuarios = await usuarioService.obtenerUsuariosPorRol(rol)
       res.json({
         success: true,
-        data: estadisticas,
+        data: usuarios,
       })
     } catch (error) {
       res.status(500).json({

@@ -1,5 +1,4 @@
 "use client"
-
 import React, { createContext, useContext, useEffect, useState } from "react"
 
 interface User {
@@ -26,15 +25,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Cargar token y usuario al montar
-    const savedToken = localStorage.getItem("token")
-    const savedUser = localStorage.getItem("user")
-
-    if (savedToken && savedUser) {
-      setToken(savedToken)
-      setUser(JSON.parse(savedUser))
+    // Función para verificar y validar el token guardado
+    const initializeAuth = async () => {
+      try {
+        const savedToken = localStorage.getItem("token")
+        const savedUser = localStorage.getItem("user")
+        
+        if (savedToken && savedUser) {
+          // Verificar que el token sea válido haciendo una petición al backend
+          const response = await fetch("http://localhost:3001/api/usuarios/verify", {
+            method: "GET",
+            headers: {
+              "Authorization": `Bearer ${savedToken}`,
+              "Content-Type": "application/json"
+            }
+          })
+          
+          if (response.ok) {
+            // Token válido, restaurar sesión
+            const parsedUser = JSON.parse(savedUser)
+            setToken(savedToken)
+            setUser(parsedUser)
+          } else {
+            // Token inválido, limpiar datos
+            localStorage.removeItem("token")
+            localStorage.removeItem("user")
+          }
+        }
+      } catch (error) {
+        console.error("Error al verificar autenticación:", error)
+        // En caso de error, limpiar datos
+        localStorage.removeItem("token")
+        localStorage.removeItem("user")
+      } finally {
+        setLoading(false)
+      }
     }
-    setLoading(false)
+
+    initializeAuth()
   }, [])
 
   const login = async (userData: User, token: string) => {
@@ -49,6 +77,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setToken(null)
     localStorage.removeItem("user")
     localStorage.removeItem("token")
+    // Redirect to login page
+    window.location.href = "/"
   }
 
   return (
