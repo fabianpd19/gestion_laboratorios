@@ -5,7 +5,7 @@ module.exports = {
   async up(queryInterface, Sequelize) {
     // === 1. Usuarios ===
     await queryInterface.createTable("usuarios", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       nombre: { type: Sequelize.STRING, allowNull: false },
       correo: { type: Sequelize.STRING, allowNull: false, unique: true },
       rol: { type: Sequelize.STRING, allowNull: false }, // estudiante, docente, admin
@@ -23,7 +23,7 @@ module.exports = {
 
     // === 2. Asignaturas ===
     await queryInterface.createTable("asignaturas", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       nombre: { type: Sequelize.STRING, allowNull: false },
       codigo: { type: Sequelize.STRING, allowNull: false },
       createdAt: {
@@ -40,11 +40,11 @@ module.exports = {
 
     // === 3. Laboratorios ===
     await queryInterface.createTable("laboratorios", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       nombre: { type: Sequelize.STRING, allowNull: false },
       descripcion: { type: Sequelize.TEXT },
       responsable_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "usuarios", key: "id" },
         onDelete: "SET NULL",
       },
@@ -62,10 +62,10 @@ module.exports = {
 
     // === 4. Equipos ===
     await queryInterface.createTable("equipos", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       nombre: { type: Sequelize.STRING, allowNull: false },
       laboratorio_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "laboratorios", key: "id" },
         onDelete: "CASCADE",
       },
@@ -83,20 +83,20 @@ module.exports = {
 
     // === 5. Guias Laboratorio ===
     await queryInterface.createTable("guias_laboratorio", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       titulo: { type: Sequelize.STRING, allowNull: false },
       laboratorio_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "laboratorios", key: "id" },
         onDelete: "CASCADE",
       },
       asignatura_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "asignaturas", key: "id" },
         onDelete: "CASCADE",
       },
       docente_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "usuarios", key: "id" },
         onDelete: "SET NULL",
       },
@@ -114,19 +114,19 @@ module.exports = {
 
     // === 6. Horarios Laboratorio ===
     await queryInterface.createTable("horarios_laboratorio", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       laboratorio_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "laboratorios", key: "id" },
         onDelete: "CASCADE",
       },
       asignatura_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "asignaturas", key: "id" },
         onDelete: "CASCADE",
       },
       docente_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "usuarios", key: "id" },
         onDelete: "SET NULL",
       },
@@ -145,14 +145,14 @@ module.exports = {
 
     // === 7. Usos Laboratorio ===
     await queryInterface.createTable("usos_laboratorio", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       laboratorio_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "laboratorios", key: "id" },
         onDelete: "CASCADE",
       },
       usuario_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "usuarios", key: "id" },
         onDelete: "CASCADE",
       },
@@ -171,19 +171,19 @@ module.exports = {
 
     // === 8. Bitácoras ===
     await queryInterface.createTable("bitacoras", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       guia_laboratorio_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "guias_laboratorio", key: "id" },
         onDelete: "CASCADE",
       },
       laboratorio_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "laboratorios", key: "id" },
         onDelete: "CASCADE",
       },
       usuario_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "usuarios", key: "id" },
         onDelete: "CASCADE",
       },
@@ -202,14 +202,14 @@ module.exports = {
 
     // === 9. Docente Asignaturas ===
     await queryInterface.createTable("docente_asignaturas", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       docente_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "usuarios", key: "id" },
         onDelete: "CASCADE",
       },
       asignatura_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "asignaturas", key: "id" },
         onDelete: "CASCADE",
       },
@@ -227,14 +227,14 @@ module.exports = {
 
     // === 10. Inscripciones Asignaturas ===
     await queryInterface.createTable("inscripciones_asignaturas", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       estudiante_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "usuarios", key: "id" },
         onDelete: "CASCADE",
       },
       asignatura_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "asignaturas", key: "id" },
         onDelete: "CASCADE",
       },
@@ -252,19 +252,19 @@ module.exports = {
 
     // === 11. Asignaciones Prácticas ===
     await queryInterface.createTable("asignaciones_practicas", {
-      id: { type: Sequelize.INTEGER, primaryKey: true, autoIncrement: true },
+      id: { type: Sequelize.UUID, primaryKey: true, autoIncrement: false },
       estudiante_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "usuarios", key: "id" },
         onDelete: "CASCADE",
       },
       equipo_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "equipos", key: "id" },
         onDelete: "CASCADE",
       },
       guia_laboratorio_id: {
-        type: Sequelize.INTEGER,
+        type: Sequelize.UUID,
         references: { model: "guias_laboratorio", key: "id" },
         onDelete: "CASCADE",
       },

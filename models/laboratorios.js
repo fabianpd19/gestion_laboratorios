@@ -2,8 +2,8 @@ const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('laboratorios', {
     id: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
+      autoIncrement: false,
+      type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true
     },
@@ -21,7 +21,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     capacidad_maxima: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false
     },
     tipo_laboratorio: {
@@ -39,7 +39,7 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: {}
     },
     responsable_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: 'usuarios',

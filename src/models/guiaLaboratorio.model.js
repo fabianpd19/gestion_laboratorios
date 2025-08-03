@@ -5,16 +5,16 @@ const GuiaLaboratorio = sequelize.define(
   "GuiaLaboratorio",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     titulo: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "laboratorios",
@@ -22,7 +22,7 @@ const GuiaLaboratorio = sequelize.define(
       },
     },
     asignatura_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "asignaturas",
@@ -30,7 +30,7 @@ const GuiaLaboratorio = sequelize.define(
       },
     },
     docente_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: "usuarios",

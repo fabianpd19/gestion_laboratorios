@@ -2,13 +2,13 @@ const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('docente_asignaturas', {
     id: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
+      autoIncrement: false,
+      type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true
     },
     docente_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: 'usuarios',
@@ -17,7 +17,7 @@ module.exports = function(sequelize, DataTypes) {
       unique: "docente_asignaturas_docente_id_asignatura_id_periodo_academ_key"
     },
     asignatura_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: 'asignaturas',

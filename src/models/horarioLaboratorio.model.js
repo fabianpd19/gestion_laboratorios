@@ -5,12 +5,12 @@ const HorarioLaboratorio = sequelize.define(
   "HorarioLaboratorio",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "laboratorios",
@@ -18,7 +18,7 @@ const HorarioLaboratorio = sequelize.define(
       },
     },
     asignatura_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "asignaturas",
@@ -26,7 +26,7 @@ const HorarioLaboratorio = sequelize.define(
       },
     },
     docente_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: "usuarios",

@@ -1,11 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/auth-context"
 import { BookOpen, Users, FileText, Settings, LogOut, Download } from "lucide-react"
+import { laboratorioService } from '@/lib/laboratorio-service'
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface User {
   id: string
@@ -18,76 +20,144 @@ interface User {
 interface DocenteDashboardProps {
   user: User
 }
-
+DocenteDashboard 
 
 export function DocenteDashboard({ user }: DocenteDashboardProps) {
 
-  const { logout } = useAuth()
+  const { logout, token } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
   const [usuariosOpen, setUsuariosOpen] = useState(false)
   const [labsOpen, setLabsOpen] = useState(false)
   const [usoOpen, setUsoOpen] = useState(false)
 
-  // --- DATOS SIMULADOS ---
-  // Para usar las APIs, descomenta el bloque de useEffect y useState correspondiente y coloca el endpoint correcto
 
-  // USUARIOS
-  // const [usuarios, setUsuarios] = useState([])
-  // const [usuariosLoading, setUsuariosLoading] = useState(false)
-  // const [usuariosError, setUsuariosError] = useState<string|null>(null)
+  // USUARIOS (solo para reportes)
+  const [usuarios, setUsuarios] = useState<any[]>([])
+  const [usuariosLoading, setUsuariosLoading] = useState(false)
+  const [usuariosError, setUsuariosError] = useState<string|null>(null)
+  const [usuariosDialogOpen, setUsuariosDialogOpen] = useState(false)
+
+  // LABORATORIOS (solo para reportes)
+  const [labs, setLabs] = useState<any[]>([])
+  const [labsLoading, setLabsLoading] = useState(false)
+  const [labsError, setLabsError] = useState<string|null>(null)
+
+  // ASIGNATURAS (solo para reportes)
+  const [materias, setMaterias] = useState<any[]>([])
+  const [materiasLoading, setMateriasLoading] = useState(false)
+  const [materiasError, setMateriasError] = useState<string|null>(null)
+
+  // USO DE LABORATORIOS (solo para reportes)
+  const [usosLaboratorio, setUsosLaboratorio] = useState<any[]>([])
+  const [usosLaboratorioLoading, setUsosLaboratorioLoading] = useState(false)
+  const [usosLaboratorioError, setUsosLaboratorioError] = useState<string|null>(null)
+
+  // Cargar datos solo cuando se abre el tab de Reportes
+  useEffect(() => {
+    if (activeTab === "reportes") {
+      // Laboratorios
+      setLabsLoading(true)
+      fetch("http://localhost:3001/api/laboratorios")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setLabs(data)
+          } else if (data && typeof data === 'object') {
+            setLabs(Object.values(data))
+          } else {
+            setLabs([])
+          }
+        })
+        .catch(() => setLabsError("Error al cargar laboratorios"))
+        .finally(() => setLabsLoading(false))
+
+      setMateriasLoading(true)
+      fetch("http://localhost:3001/api/asignaturas")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setMaterias(data)
+          } else if (data && typeof data === 'object') {
+            setMaterias(Object.values(data))
+          } else {
+            setMaterias([])
+          }
+        })
+        .catch(() => setMateriasError("Error al cargar asignaturas"))
+        .finally(() => setMateriasLoading(false))
+
+      // Uso de Laboratorios
+      setUsosLaboratorioLoading(true)
+      fetch("http://localhost:3001/api/uso-laboratorios")
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            setUsosLaboratorio(data)
+          } else if (data && typeof data === 'object') {
+            setUsosLaboratorio(Object.values(data))
+          } else {
+            setUsosLaboratorio([])
+          }
+        })
+        .catch(() => setUsosLaboratorioError("Error al cargar uso de laboratorios"))
+        .finally(() => setUsosLaboratorioLoading(false))
+    }
+  }, [activeTab])
+
+  // BITÁCORAS (no se pidió API, pero aquí ejemplo)
+  // const [bitacorasRecientes, setBitacorasRecientes] = useState([])
   // useEffect(() => {
-  //   setUsuariosLoading(true)
-  //   fetch('/api/usuarios') // <-- Cambia por tu endpoint real
+  //   fetch('/api/bitacoras')
   //     .then(res => res.json())
-  //     .then(data => setUsuarios(data))
-  //     .catch(() => setUsuariosError('Error al cargar usuarios'))
-  //     .finally(() => setUsuariosLoading(false))
+  //     .then(data => setBitacorasRecientes(data))
   // }, [])
-  const usuarios = [
-    { id: 1, nombre: "Ana López", email: "ana@uni.edu", rol: "estudiante", activo: true, updated_at: "2024-07-01T10:00:00", laboratorios: "Lab Química, Lab Física" },
-    { id: 2, nombre: "Luis Pérez", email: "luis@uni.edu", rol: "docente", activo: true, updated_at: "2024-07-02T09:30:00", laboratorios: "Lab Física" },
-    { id: 3, nombre: "Marta Ruiz", email: "marta@uni.edu", rol: "estudiante", activo: false, updated_at: "2024-06-28T15:20:00", laboratorios: "Lab Química" },
-  ];
-  const [usuariosLoading] = useState(false)
-  const [usuariosError] = useState<string|null>(null)
-
-  // LABORATORIOS
-  // const [labs, setLabs] = useState([])
-  // const [labsLoading, setLabsLoading] = useState(false)
-  // const [labsError, setLabsError] = useState<string|null>(null)
-  // useEffect(() => {
-  //   setLabsLoading(true)
-  //   fetch('/api/laboratorios') // <-- Cambia por tu endpoint real
-  //     .then(res => res.json())
-  //     .then(data => setLabs(data))
-  //     .catch(() => setLabsError('Error al cargar laboratorios'))
-  //     .finally(() => setLabsLoading(false))
-  // }, [])
-  const labs = [
-    { id: 1, nombre: "Lab Química", codigo: "LAB-Q01", ubicacion: "Edificio A, Piso 2", capacidad_maxima: 30, equipos_disponibles: [ { nombre: "Probetas" }, { nombre: "Balanza" } ], activo: true, responsable: "Dra. Ana Torres" },
-    { id: 2, nombre: "Lab Física", codigo: "LAB-F01", ubicacion: "Edificio B, Piso 1", capacidad_maxima: 25, equipos_disponibles: [ { nombre: "Osciloscopio" }, { nombre: "Multímetro" } ], activo: true, responsable: "Dr. Luis Pérez" },
-    { id: 3, nombre: "Lab Biología", codigo: "LAB-B01", ubicacion: "Edificio C, Piso 3", capacidad_maxima: 20, equipos_disponibles: [ { nombre: "Microscopio" } ], activo: false, responsable: "Dra. Marta Ruiz" },
-  ];
-  const [labsLoading] = useState(false)
-  const [labsError] = useState<string|null>(null)
-
-  // ASIGNATURAS
-  // const [materias, setMaterias] = useState([])
-  // useEffect(() => {
-  //   fetch('/api/asignaturas') // <-- Cambia por tu endpoint real
-  //     .then(res => res.json())
-  //     .then(data => setMaterias(data))
-  //     .catch(() => {/* manejar error */})
-  // }, [])
-  const materias = [
-    { id: 1, nombre: "Química Orgánica", codigo: "QUI-301", estudiantes: 25, docente: "Dra. Ana Torres", laboratorio: "Lab Química", avance: "80%", proximaGuia: "Guía 5", estado: "En curso" },
-    { id: 2, nombre: "Física Experimental", codigo: "FIS-201", estudiantes: 30, docente: "Dr. Luis Pérez", laboratorio: "Lab Física", avance: "60%", proximaGuia: "Guía 3", estado: "En curso" },
-  ]
-
   const bitacorasRecientes = [
     { id: 1, estudiante: "Ana López", practica: "Síntesis de Aspirina", fecha: "2024-01-15", estado: "Completada" },
     { id: 2, estudiante: "Carlos Ruiz", practica: "Medición de pH", fecha: "2024-01-14", estado: "Pendiente" },
   ]
+
+  // Solo cargar usuarios cuando se abre el dialogo de reporte de usuarios
+  useEffect(() => {
+    if (usuariosDialogOpen) {
+      setUsuariosLoading(true)
+      fetch("http://localhost:3001/api/usuarios", {
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+      })
+        .then(res => {
+          if (!res.ok) throw new Error("No autorizado")
+          return res.json()
+        })
+        .then(result => {
+          // Si la API responde { success, data: [...] }
+          if (result && Array.isArray(result.data)) {
+            setUsuarios(result.data)
+          } else if (result && typeof result.data === 'object') {
+            setUsuarios(Object.values(result.data))
+          } else {
+            setUsuarios([])
+          }
+        })
+        .catch(() => setUsuariosError("Error al cargar usuarios"))
+        .finally(() => setUsuariosLoading(false))
+    }
+  }, [usuariosDialogOpen, token])
+
+  const handleOpenUsuarios = (open: boolean) => {
+    setUsuariosOpen(open)
+    setUsuariosDialogOpen(open)
+    if (!open) {
+      setUsuarios([])
+      setUsuariosError(null)
+    }
+  }
+
+  const handleOpenLabs = (open: boolean) => {
+    setLabsOpen(open)
+  }
+
+  const [asigOpen, setAsigOpen] = useState(false)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -193,7 +263,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                                 {usuarios.map((u) => (
                                   <tr key={u.id}>
                                     <td className="px-3 py-2 border">{u.nombre}</td>
-                                    <td className="px-3 py-2 border">{u.email}</td>
+                                    <td className="px-3 py-2 border">{u.email || u.correo || u.correo_electronico || '-'}</td>
                                     <td className="px-3 py-2 border capitalize">{u.rol}</td>
                                     <td className="px-3 py-2 border">{u.activo ? 'Activo' : 'Inactivo'}</td>
                                     <td className="px-3 py-2 border">{u.updated_at ? new Date(u.updated_at).toLocaleString() : '-'}</td>
@@ -333,8 +403,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                           <CardContent className="p-4 text-center">
                             <div className="text-2xl font-bold text-purple-700">{materias.reduce((sum, m) => {
                               // Extraer número de la cadena avance (ej: "80%")
-                              const match = m.avance.match(/(\d+)%/);
-                              return sum + (match ? parseInt(match[1]) / 20 : 0); // Suponiendo 5 guías por materia
+const match = typeof m.avance === 'string' ? m.avance.match(/(\d+)%/) : null;                              return sum + (match ? parseInt(match[1]) / 20 : 0); // Suponiendo 5 guías por materia
                             }, 0)}</div>
                             <div className="text-xs text-gray-600">Guías Ejecutadas</div>
                           </CardContent>
@@ -344,7 +413,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                             <div className="text-2xl font-bold text-yellow-700">
                               {/* Porcentaje de ejecución promedio */}
                               {materias.length > 0 ? `${Math.round(materias.reduce((sum, m) => {
-                                const match = m.avance.match(/(\d+)%/);
+                                const match = typeof m.avance === 'string' ? m.avance.match(/(\d+)%/) : null;
                                 return sum + (match ? parseInt(match[1]) : 0);
                               }, 0) / materias.length)}%` : '0%'}
                             </div>
@@ -494,7 +563,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {bitacoras.filter((b) => b.estado === "pendiente").length}
+                    {bitacorasRecientes.filter((b) => b.estado === "Pendiente").length}
                   </div>
                 </CardContent>
               </Card>
@@ -507,17 +576,17 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {bitacoras.map((bitacora) => (
+                  {bitacorasRecientes.map((bitacora) => (
                     <div key={bitacora.id} className="flex items-center justify-between p-4 border rounded-lg">
                       <div>
-                        <p className="font-medium">{bitacora.titulo_laboratorio}</p>
-                        <p className="text-sm text-gray-600">{bitacora.tema}</p>
-                        <p className="text-xs text-gray-500">{bitacora.fecha_bitacora}</p>
+                        <p className="font-medium">{bitacora.estudiante}</p>
+                        <p className="text-sm text-gray-600">{bitacora.practica}</p>
+                        <p className="text-xs text-gray-500">{bitacora.fecha}</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <span
                           className={`px-2 py-1 rounded-full text-xs ${
-                            bitacora.estado === "completada"
+                            bitacora.estado === "Completada"
                               ? "bg-green-100 text-green-800"
                               : "bg-yellow-100 text-yellow-800"
                           }`}
@@ -587,15 +656,15 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                         </tr>
                       </thead>
                       <tbody>
-                        {bitacoras.map((bitacora) => (
+                        {bitacorasRecientes.map((bitacora) => (
                           <tr key={bitacora.id} className="border-t">
-                            <td className="px-4 py-2">{bitacora.nombre_profesor}</td>
-                            <td className="px-4 py-2">{bitacora.tema}</td>
-                            <td className="px-4 py-2">{bitacora.fecha_bitacora}</td>
+                            <td className="px-4 py-2">{bitacora.estudiante}</td>
+                            <td className="px-4 py-2">{bitacora.practica}</td>
+                            <td className="px-4 py-2">{bitacora.fecha}</td>
                             <td className="px-4 py-2">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs ${
-                                  bitacora.estado === "completada"
+                                  bitacora.estado === "Completada"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-yellow-100 text-yellow-800"
                                 }`}
@@ -615,7 +684,6 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                             </td>
                           </tr>
                         ))}
-
                       </tbody>
                     </table>
                   </div>

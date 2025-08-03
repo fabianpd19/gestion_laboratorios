@@ -2,6 +2,13 @@ const usuarioRepository = require("../repositories/usuario.repository")
 const bcrypt = require("bcrypt")
 
 class UsuarioService {
+  async obtenerTodos(filtros = {}) {
+    try {
+      return await usuarioRepository.obtenerTodos(filtros)
+    } catch (error) {
+      throw new Error(`Error en servicio de usuario: ${error.message}`)
+    }
+  }
   async crearUsuario(datosUsuario) {
     try {
       // Validar que el correo no exista

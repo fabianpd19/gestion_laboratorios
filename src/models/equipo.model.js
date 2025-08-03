@@ -5,16 +5,16 @@ const Equipo = sequelize.define(
   "Equipo",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     nombre: {
       type: DataTypes.STRING,
       allowNull: false,
     },
     laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "laboratorios",

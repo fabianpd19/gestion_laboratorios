@@ -5,9 +5,9 @@ const Asignatura = sequelize.define(
   "Asignatura",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     nombre: {
       type: DataTypes.STRING,

@@ -2,8 +2,8 @@ const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('asignaturas', {
     id: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
+      autoIncrement: false,
+      type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true
     },
@@ -25,11 +25,11 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     semestre: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false
     },
     creditos: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false
     },
     descripcion: {

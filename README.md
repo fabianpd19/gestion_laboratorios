@@ -427,3 +427,36 @@ El sistema implementa un manejo robusto de errores:
 - [ ] Notificaciones en tiempo real
 - [ ] Dashboard de administración
 - [ ] Exportación de reportes (PDF/Excel)
+
+
+### Kevin Ordoñez Cabio por INTEGER a UUID o algo asi XDDD
+
+BASE DE DATOS
+
+**PRIMERO:**
+
+--ALTER TABLE asignaturas ADD COLUMN id_tmp UUID DEFAULT uuid_generate_v4();
+
+-- ALTER TABLE asignaturas DROP COLUMN id;
+
+-- ALTER TABLE asignaturas RENAME COLUMN id_tmp TO id;
+
+-- ALTER TABLE asignaturas ADD PRIMARY KEY (id);
+
+
+SEGUNDO XD:
+**CREACION DE USUARIO**
+{
+  "id": "e3b0c442-98fc-4621-8e3f-2e5b8f5c7a8d",
+  "nombre": "Juan Pérez",
+  "correo": "juan.perez@example.com",
+  "password": "12345678",
+  "rol": "docente",
+  "codigo_estudiante": "20230001",
+  "programa_academico": "Ingeniería de Sistemas",
+  "departamento": "Ciencias de la Computación",
+  "telefono": "1234567890",
+  "documento_identidad": "123456789",
+  "fecha_ingreso": "2023-08-01",
+  "activo": true
+}

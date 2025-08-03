@@ -5,12 +5,12 @@ const AsignacionPractica = sequelize.define(
   "AsignacionPractica",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     estudiante_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "usuarios",
@@ -18,7 +18,7 @@ const AsignacionPractica = sequelize.define(
       },
     },
     equipo_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "equipos",
@@ -26,7 +26,7 @@ const AsignacionPractica = sequelize.define(
       },
     },
     guia_laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "guias_laboratorio",

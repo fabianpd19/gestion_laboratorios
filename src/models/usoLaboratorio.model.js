@@ -5,12 +5,12 @@ const UsoLaboratorio = sequelize.define(
   "UsoLaboratorio",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "laboratorios",
@@ -18,7 +18,7 @@ const UsoLaboratorio = sequelize.define(
       },
     },
     usuario_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "usuarios",

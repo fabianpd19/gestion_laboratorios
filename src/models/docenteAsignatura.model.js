@@ -5,12 +5,12 @@ const DocenteAsignatura = sequelize.define(
   "DocenteAsignatura",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     docente_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "usuarios",
@@ -18,7 +18,7 @@ const DocenteAsignatura = sequelize.define(
       },
     },
     asignatura_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "asignaturas",

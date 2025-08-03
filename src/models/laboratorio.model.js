@@ -5,9 +5,9 @@ const Laboratorio = sequelize.define(
   "Laboratorio",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     nombre: {
       type: DataTypes.STRING,
@@ -18,7 +18,7 @@ const Laboratorio = sequelize.define(
       allowNull: true,
     },
     responsable_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: "usuarios",

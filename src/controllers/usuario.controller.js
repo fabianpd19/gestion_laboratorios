@@ -25,7 +25,7 @@ class UsuarioController {
         busqueda: req.query.busqueda,
       }
 
-      const usuarios = await usuarioService.obtenerUsuarios(filtros)
+      const usuarios = await usuarioService.obtenerTodos(filtros)
       res.json({
         success: true,
         data: usuarios,

@@ -2,8 +2,8 @@ const Sequelize = require('sequelize');
 module.exports = function(sequelize, DataTypes) {
   return sequelize.define('bitacoras', {
     id: {
-      autoIncrement: true,
-      type: DataTypes.INTEGER,
+      autoIncrement: false,
+      type: DataTypes.UUID,
       allowNull: false,
       primaryKey: true
     },
@@ -40,7 +40,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     numero_usuarios: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false
     },
     tema_practica_proyecto: {
@@ -62,7 +62,7 @@ module.exports = function(sequelize, DataTypes) {
       defaultValue: "borrador"
     },
     guia_laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: 'guias_laboratorio',
@@ -82,7 +82,7 @@ module.exports = function(sequelize, DataTypes) {
       allowNull: false
     },
     usuario_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: 'usuarios',
@@ -90,7 +90,7 @@ module.exports = function(sequelize, DataTypes) {
       }
     },
     laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: 'laboratorios',

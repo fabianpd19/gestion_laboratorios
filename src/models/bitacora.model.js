@@ -5,12 +5,12 @@ const Bitacora = sequelize.define(
   "Bitacora",
   {
     id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       primaryKey: true,
-      autoIncrement: true,
+      autoIncrement: false,
     },
     guia_laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "guias_laboratorio",
@@ -18,7 +18,7 @@ const Bitacora = sequelize.define(
       },
     },
     laboratorio_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "laboratorios",
@@ -26,7 +26,7 @@ const Bitacora = sequelize.define(
       },
     },
     usuario_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: false,
       references: {
         model: "usuarios",
