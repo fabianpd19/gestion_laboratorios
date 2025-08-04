@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/auth-context"
 import { BookOpen, Users, FileText, Settings, LogOut, Download } from "lucide-react"
 import { laboratorioService } from '@/lib/laboratorio-service'
+import { generarPDFUsuarios, generarPDFBitacoras } from '@/lib/reportes-pdf'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface User {
@@ -17,10 +18,10 @@ interface User {
   email: string
 }
 
+
 interface DocenteDashboardProps {
-  user: User
+  user: User;
 }
-DocenteDashboard 
 
 export function DocenteDashboard({ user }: DocenteDashboardProps) {
 
@@ -213,7 +214,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                         <DialogDescription>Listado de usuarios registrados en el sistema</DialogDescription>
                       </DialogHeader>
                     <div className="flex justify-end mb-4">
-                      <Button variant="outline" onClick={() => alert('Descargar reporte de usuarios (simulado)')}>Descargar Reporte</Button>
+                      <Button variant="outline" onClick={() => generarPDFUsuarios(usuarios)}>Descargar Reporte</Button>
                     </div>
                       {usuariosLoading ? (
                         <div className="py-8 text-center">Cargando...</div>
@@ -295,7 +296,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                         <DialogDescription>Listado de laboratorios registrados en el sistema</DialogDescription>
                       </DialogHeader>
                     <div className="flex justify-end mb-4">
-                      <Button variant="outline" onClick={() => alert('Descargar reporte de laboratorios (simulado)')}>Descargar Reporte</Button>
+                      <Button variant="outline" onClick={() => generarPDFBitacoras(labs)}>Descargar Reporte</Button>
                     </div>
                       {labsLoading ? (
                         <div className="py-8 text-center">Cargando...</div>
@@ -467,7 +468,7 @@ const match = typeof m.avance === 'string' ? m.avance.match(/(\d+)%/) : null;   
                         <DialogDescription>Listado de usos de laboratorios registrados</DialogDescription>
                       </DialogHeader>
                     <div className="flex justify-end mb-4">
-                      <Button variant="outline" onClick={() => alert('Descargar reporte de uso de laboratorios (simulado)')}>Descargar Reporte</Button>
+                      <Button variant="outline" onClick={() => generarPDFBitacoras(usosLaboratorio)}>Descargar Reporte</Button>
                     </div>
                       {/* Cuadros resumen de uso de laboratorios */}
                       <div className="grid grid-cols-2 gap-4 mb-6">
@@ -485,7 +486,7 @@ const match = typeof m.avance === 'string' ? m.avance.match(/(\d+)%/) : null;   
                                 const equiposSet = new Set<string>();
                                 usosLaboratorio.forEach(u => {
                                   if (u.equipos) {
-                                    u.equipos.split(',').map(e => e.trim()).forEach(e => equiposSet.add(e));
+                                  u.equipos.split(',').map((e: string) => e.trim()).forEach((e: string) => equiposSet.add(e));
                                   }
                                 });
                                 return equiposSet.size;
@@ -641,7 +642,7 @@ const match = typeof m.avance === 'string' ? m.avance.match(/(\d+)%/) : null;   
                 <div className="space-y-4">
                   <div className="flex gap-4">
                     <Button>Generar Nueva Bitácora</Button>
-                    <Button variant="outline">Exportar Reportes</Button>
+                    <Button variant="outline" onClick={() => generarPDFBitacoras(bitacorasRecientes)}>Exportar Reportes</Button>
                   </div>
 
                   <div className="border rounded-lg overflow-hidden">
