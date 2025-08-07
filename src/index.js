@@ -10,6 +10,8 @@ const asignaturaRoutes = require("./routes/asignatura.routes")
 const equipoRoutes = require("./routes/equipo.routes")
 const guiaLaboratorioRoutes = require("./routes/guiaLaboratorio.routes")
 const bitacoraRoutes = require("./routes/bitacora.routes")
+const inscripcionAsignaturaRoutes = require("./routes/inscripcionAsignatura.routes")
+const equipoLaboratorioRoutes = require("./routes/equipoLaboratorio.routes")
 
 const app = express()
 const PORT = process.env.PORT || 3001
@@ -26,6 +28,8 @@ app.use("/api/asignaturas", asignaturaRoutes)
 app.use("/api/equipos", equipoRoutes)
 app.use("/api/guias-laboratorio", guiaLaboratorioRoutes)
 app.use("/api/bitacoras", bitacoraRoutes)
+app.use("/api/inscripciones-asignaturas", inscripcionAsignaturaRoutes)
+app.use("/api/equipos-laboratorio", equipoLaboratorioRoutes)
 
 // Ruta de prueba
 app.get("/", (req, res) => {
@@ -39,6 +43,8 @@ app.get("/", (req, res) => {
       equipos: "/api/equipos",
       guias: "/api/guias-laboratorio",
       bitacoras: "/api/bitacoras",
+      inscripciones: "/api/inscripciones-asignaturas",
+      equiposLaboratorio: "/api/equipos-laboratorio",
     },
   })
 })

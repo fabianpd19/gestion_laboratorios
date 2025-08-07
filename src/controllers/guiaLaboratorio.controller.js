@@ -86,4 +86,5 @@ class GuiaLaboratorioController {
   }
 }
 
+
 module.exports = new GuiaLaboratorioController()

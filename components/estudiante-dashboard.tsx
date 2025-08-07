@@ -1,18 +1,21 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/auth-context"
 import { BookOpen, FileText, Settings, LogOut, Plus, CheckCircle } from "lucide-react"
 import { BitacoraForm } from "@/components/bitacora-form"
+import { EquipoForm } from "@/components/agregarEquipo-form"
+import Swal from 'sweetalert2';
+
 
 interface User {
-  id: string
-  username: string
+  id: number
+  username?: string
   name: string
-  role: "docente" | "estudiante"
+  role: "estudiante"
   email: string
 }
 
@@ -24,26 +27,118 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
   const { logout } = useAuth()
   const [activeTab, setActiveTab] = useState("overview")
   const [showBitacoraForm, setShowBitacoraForm] = useState(false)
+  const [showEquipoForm, setShowEquipoForm] = useState(false)
 
-  // Datos simulados (aquí irán las APIs)
-  const materias = [
-    { id: 1, nombre: "Química Orgánica", codigo: "QUI-301", docente: "Dr. Juan Pérez" },
-    { id: 2, nombre: "Física Experimental", codigo: "FIS-201", docente: "Dra. Ana Martínez" },
-  ]
+  const [materias, setMaterias] = useState<any[]>([])
+  const [practicas, setPracticas] = useState<any[]>([])
+  const [misBitacoras, setMisBitacoras] = useState<any[]>([])
 
-  const practicas = [
-    { id: 1, nombre: "Síntesis de Aspirina", materia: "Química Orgánica", fecha: "2024-01-20", estado: "Pendiente" },
-    { id: 2, nombre: "Medición de pH", materia: "Química Orgánica", fecha: "2024-01-15", estado: "Completada" },
-    { id: 3, nombre: "Ley de Ohm", materia: "Física Experimental", fecha: "2024-01-18", estado: "En Progreso" },
-  ]
+  useEffect(() => {
+    const token = localStorage.getItem("token")
+    // 1. Cargar inscripciones del estudiante
+    fetch(`http://localhost:3001/api/inscripciones-asignaturas?estudiante_id=${user.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(res => res.json())
+      .then(async (inscripcionesRes) => {
+        // Extrae el array real de inscripciones
+        const inscripciones = Array.isArray(inscripcionesRes) ? inscripcionesRes : inscripcionesRes.data || []
+        // Si el endpoint devuelve solo IDs, pide los datos de cada asignatura
+        const asignaturas = await Promise.all(
+          inscripciones.map(async (insc: any) => {
+            const res = await fetch(`http://localhost:3001/api/asignaturas/${insc.asignatura_id}`, {
+              headers: {
+                Authorization: `Bearer ${token}`
+              }
+            })
+            const materiaRes = await res.json()
+            return materiaRes.data || materiaRes // Ajusta según tu backend
+          })
+        )
+        setMaterias(asignaturas)
 
-  const misBitacoras = [
-    { id: 1, practica: "Medición de pH", fecha: "2024-01-15", estado: "Enviada" },
-    { id: 2, practica: "Ley de Ohm", fecha: "2024-01-18", estado: "Borrador" },
-  ]
+        // 2. Cargar guías de laboratorio para cada asignatura inscrita
+        let allGuias: any[] = []
+        for (const asignatura of asignaturas) {
+          if (!asignatura?.id) continue // Evita undefined
+          const res = await fetch(`http://localhost:3001/api/guias-laboratorio?asignatura_id=${asignatura.id}`, {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          })
+          const guiasRes = await res.json()
+          const guias = Array.isArray(guiasRes) ? guiasRes : guiasRes.data || []
+          allGuias = allGuias.concat(guias)
+        }
+        setPracticas(allGuias)
+      })
+      .catch(err => console.error("Error fetch inscripciones:", err))
+
+    // 3. Cargar bitácoras del estudiante
+    fetch(`http://localhost:3001/api/bitacoras?estudiante_id=${user.id}`, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    })
+      .then(res => res.json())
+      .then(dataRes => {
+        const bitacoras = Array.isArray(dataRes) ? dataRes : dataRes.data || []
+        setMisBitacoras(bitacoras)
+      })
+      .catch(err => console.error("Error fetch bitacoras:", err))
+  }, [user.id])
+
+  const handleEquipoSubmit = async (form: any) => {
+    const token = localStorage.getItem("token")
+
+    // 1. Guardar en equipos
+    const resEquipos = await fetch("http://localhost:3001/api/equipos", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(form),
+    })
+
+    // 2. Guardar en equipos_laboratorio
+    const resEquiposLab = await fetch("http://localhost:3001/api/equipos-laboratorio", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(form),
+    })
+
+    if (resEquipos.ok && resEquiposLab.ok) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Éxito',
+        text: 'Equipo agregado correctamente en ambas tablas',
+      });
+      setShowEquipoForm(false);
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Error',
+        text: 'Error al agregar equipo',
+      });
+    }
+
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {showEquipoForm && (
+        <EquipoForm
+          guias={practicas}
+          onClose={() => setShowEquipoForm(false)}
+          onSubmit={handleEquipoSubmit}
+        />
+      )}
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -62,14 +157,15 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="overview">Resumen</TabsTrigger>
             <TabsTrigger value="materias">Materias</TabsTrigger>
-            <TabsTrigger value="practicas">Prácticas</TabsTrigger>
-            <TabsTrigger value="bitacoras">Bitácoras</TabsTrigger>
+            <TabsTrigger value="practicas">Guias</TabsTrigger>
+            {/* <TabsTrigger value="bitacoras">Bitácoras</TabsTrigger> */}
             <TabsTrigger value="perfil">Perfil</TabsTrigger>
           </TabsList>
 
+          {/* Resumen */}
           <TabsContent value="overview" className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <Card>
@@ -84,15 +180,15 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Prácticas Pendientes</CardTitle>
+                  <CardTitle className="text-sm font-medium">Guias Pendientes</CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{practicas.filter((p) => p.estado === "Pendiente").length}</div>
+                  <div className="text-2xl font-bold">{practicas.filter((p) => p.id).length}</div>
                 </CardContent>
               </Card>
 
-              <Card>
+              {/* <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                   <CardTitle className="text-sm font-medium">Bitácoras Enviadas</CardTitle>
                   <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -100,13 +196,27 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
                 <CardContent>
                   <div className="text-2xl font-bold">{misBitacoras.filter((b) => b.estado === "Enviada").length}</div>
                 </CardContent>
+              </Card> */}
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                </CardHeader>
+                <CardContent>
+                  <Button className="w-full" onClick={() => setShowEquipoForm(true)}>
+                    Agregar equipo de laboratorio
+                  </Button>
+                </CardContent>
+                <CardContent>
+                  <Button className="w-full" >
+                    Mirar registros de equipos
+                  </Button>
+                </CardContent>
               </Card>
             </div>
 
             <Card>
               <CardHeader>
-                <CardTitle>Próximas Prácticas</CardTitle>
-                <CardDescription>Prácticas programadas para esta semana</CardDescription>
+                <CardTitle>Próximas Guias</CardTitle>
+                <CardDescription>Guias programadas para esta semana</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
@@ -115,9 +225,9 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
                     .map((practica) => (
                       <div key={practica.id} className="flex items-center justify-between p-4 border rounded-lg">
                         <div>
-                          <p className="font-medium">{practica.nombre}</p>
-                          <p className="text-sm text-gray-600">{practica.materia}</p>
-                          <p className="text-xs text-gray-500">{practica.fecha}</p>
+                          <p className="font-medium">{practica.titulo}</p>
+                          <p className="text-sm text-gray-600">Asignatura ID: {practica.asignatura_id}</p>
+                          <p className="text-xs text-gray-500">{practica.createdAt}</p>
                         </div>
                         <div className="flex items-center gap-2">
                           <span
@@ -138,6 +248,7 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
             </Card>
           </TabsContent>
 
+          {/* Materias */}
           <TabsContent value="materias" className="space-y-6">
             <Card>
               <CardHeader>
@@ -155,14 +266,8 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
                       <CardContent>
                         <div className="space-y-2">
                           <p className="text-sm text-gray-600">
-                            <strong>Docente:</strong> {materia.docente}
+                            <strong>Docente:</strong> {materia.docente || "Sin asignar"}
                           </p>
-                          <div className="flex gap-2">
-                            <Button size="sm">Ver Contenido</Button>
-                            <Button size="sm" variant="outline">
-                              Moodle
-                            </Button>
-                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -172,102 +277,78 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
             </Card>
           </TabsContent>
 
+          {/* Guias */}
           <TabsContent value="practicas" className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle>Registro de Prácticas</CardTitle>
-                <CardDescription>Todas tus prácticas de laboratorio</CardDescription>
+                <CardTitle>Registro de Guias</CardTitle>
+                <CardDescription>Todas tus Guias de laboratorio</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="border rounded-lg overflow-hidden">
                   <table className="w-full">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left">Práctica</th>
-                        <th className="px-4 py-2 text-left">Materia</th>
-                        <th className="px-4 py-2 text-left">Fecha</th>
-                        <th className="px-4 py-2 text-left">Estado</th>
-                        <th className="px-4 py-2 text-left">Acciones</th>
+                        <th className="px-4 py-2 text-left">Guía</th>
+                        <th className="px-4 py-2 text-left">Asignatura</th>
+                        <th className="px-4 py-2 text-left">Laboratorio</th>
+                        <th className="px-4 py-2 text-left">Docente</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {practicas.map((practica) => (
-                        <tr key={practica.id} className="border-t">
-                          <td className="px-4 py-2">{practica.nombre}</td>
-                          <td className="px-4 py-2">{practica.materia}</td>
-                          <td className="px-4 py-2">{practica.fecha}</td>
+                      {practicas.map((guia) => (
+                        <tr key={guia.id} className="border-t">
+                          <td className="px-4 py-2">{guia.titulo}</td>
+                          <td className="px-4 py-2">{guia.asignatura?.nombre || "Sin asignatura"}</td>
+                          <td className="px-4 py-2">{guia.laboratorio?.nombre || "Sin laboratorio"}</td>
                           <td className="px-4 py-2">
-                            <span
-                              className={`px-2 py-1 rounded-full text-xs ${
-                                practica.estado === "Completada"
-                                  ? "bg-green-100 text-green-800"
-                                  : practica.estado === "En Progreso"
-                                    ? "bg-blue-100 text-blue-800"
-                                    : "bg-yellow-100 text-yellow-800"
-                              }`}
-                            >
-                              {practica.estado}
-                            </span>
-                          </td>
-                          <td className="px-4 py-2">
-                            <Button size="sm" variant="outline">
-                              Ver Guía
-                            </Button>
+                            {guia.docente
+                              ? `${guia.docente.nombre}` : "Sin docente"}
                           </td>
                         </tr>
                       ))}
                     </tbody>
+
                   </table>
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
+          {/* Bitácoras
           <TabsContent value="bitacoras" className="space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Mis Bitácoras</CardTitle>
-                <CardDescription>Gestiona tus bitácoras de prácticas</CardDescription>
+                <CardDescription>Gestiona tus bitácoras de Guias</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <Button onClick={() => setShowBitacoraForm(true)}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Nueva Bitácora
-                  </Button>
-
-                  <div className="space-y-4">
-                    {misBitacoras.map((bitacora) => (
-                      <div key={bitacora.id} className="flex items-center justify-between p-4 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{bitacora.practica}</p>
-                          <p className="text-sm text-gray-600">{bitacora.fecha}</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`px-2 py-1 rounded-full text-xs ${
-                              bitacora.estado === "Enviada"
-                                ? "bg-green-100 text-green-800"
-                                : "bg-gray-100 text-gray-800"
-                            }`}
-                          >
-                            {bitacora.estado}
-                          </span>
-                          <Button size="sm" variant="outline">
-                            Editar
-                          </Button>
-                          <Button size="sm">Ver</Button>
-                        </div>
+                  {misBitacoras.map((bitacora) => (
+                    <div key={bitacora.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <p className="font-medium">{bitacora.tema_practica_proyecto || bitacora.contenido || "Sin título"}</p>
+                        <p className="text-sm text-gray-600">{bitacora.fecha_uso_laboratorio || bitacora.createdAt}</p>
                       </div>
-                    ))}
-                  </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            bitacora.estado === "Enviada"
+                              ? "bg-green-100 text-green-800"
+                              : "bg-gray-100 text-gray-800"
+                          }`}
+                        >
+                          {bitacora.estado}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </CardContent>
             </Card>
+          </TabsContent> */}
 
-            {showBitacoraForm && <BitacoraForm onClose={() => setShowBitacoraForm(false)} practicas={practicas} />}
-          </TabsContent>
-
+          {/* Perfil */}
           <TabsContent value="perfil" className="space-y-6">
             <Card>
               <CardHeader>

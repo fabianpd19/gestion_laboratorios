@@ -1,4 +1,5 @@
 const EquipoLaboratorioService = require("../services/equipoLaboratorio.service")
+const { EquipoLaboratorio } = require("../models/equipoLaboratorio.model")
 
 class EquipoLaboratorioController {
   async getAllEquipos(req, res) {
@@ -143,6 +144,15 @@ class EquipoLaboratorioController {
       })
     }
   }
-}
 
+  
+}
+exports.create = async (req, res) => {
+  try {
+    const equipoLab = await EquipoLaboratorio.create(req.body)
+    res.status(201).json({ success: true, data: equipoLab })
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message })
+  }
+}
 module.exports = new EquipoLaboratorioController()

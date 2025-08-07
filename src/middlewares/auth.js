@@ -32,4 +32,15 @@ const auth = async (req, res, next) => {
   }
 }
 
-module.exports = auth
+const requireJefeLaboratorio = (req, res, next) => {
+  if (req.user && req.user.rol === "jefe_laboratorio") {
+    return next();
+  }
+
+  return res.status(403).json({
+    success: false,
+    message: "Acceso denegado. Se requiere rol de jefe de laboratorio.",
+  });
+};
+
+module.exports = auth; // ✅ correcta exportación de la función
