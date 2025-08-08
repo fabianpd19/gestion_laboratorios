@@ -2,7 +2,6 @@ import { jsPDF } from 'jspdf';
 
 export function generarPDFBitacoras(bitacoras: any[]) {
   const doc = new jsPDF();
-  // Encabezado institucional
   doc.setFontSize(16);
   doc.setTextColor('#2d3748');
   doc.text('UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE', 105, 18, { align: 'center' });
