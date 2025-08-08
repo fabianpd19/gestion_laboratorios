@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/auth-context"
 import { BookOpen, Users, FileText, Settings, LogOut, Download } from "lucide-react"
 import { laboratorioService } from '@/lib/laboratorio-service'
-import { generarPDFUsuarios, generarPDFBitacoras } from '@/lib/reportes-pdf'
+import { generarPDFUsuarios, generarPDFBitacoras, generarPDFUsoLaboratorio } from '@/lib/reportes-pdf'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 
 interface User {
@@ -468,7 +468,39 @@ const match = typeof m.avance === 'string' ? m.avance.match(/(\d+)%/) : null;   
                         <DialogDescription>Listado de usos de laboratorios registrados</DialogDescription>
                       </DialogHeader>
                     <div className="flex justify-end mb-4">
-                      <Button variant="outline" onClick={() => generarPDFBitacoras(usosLaboratorio)}>Descargar Reporte</Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          generarPDFUsoLaboratorio({
+                            codigoDocumento: "VDC-INF-2025-V1-009",
+                            codigoProceso: "GDOC-ATAD-9-4-1",
+                            revision: "UPDI 2025-ene-13",
+                            fecha: new Date().toLocaleDateString(),
+                            pagina: "1 de 1",
+                            laboratorio: usosLaboratorio[0]?.laboratorio || "Laboratorio X",
+                            departamento: "Departamento de Ciencias de la Computación",
+                            profesor: usosLaboratorio[0]?.docente || "Nombre del docente",
+                            tema: usosLaboratorio[0]?.guia || "Tema de la práctica",
+                            objetivo: "Consumir una API RESTful pública o local desde una aplicación frontend.",
+                            sesiones: [
+                              {
+                                fecha: usosLaboratorio[0]?.fecha || "",
+                                nrc: "23128",
+                                alumnos: usosLaboratorio.length,
+                                firmaProfesor: ""
+                              }
+                            ],
+                            alumnos: usosLaboratorio.map((u: any, idx: number) => ({
+                              numero: idx + 1,
+                              nombre: u.estudiante || "-",
+                              equipos: u.equipos || "N/A",
+                              observaciones: u.observaciones || "Ninguna"
+                            }))
+                          });
+                        }}
+                      >
+                        Descargar Reporte
+                      </Button>
                     </div>
                       {/* Cuadros resumen de uso de laboratorios */}
                       <div className="grid grid-cols-2 gap-4 mb-6">

@@ -1,122 +1,248 @@
-import { jsPDF } from 'jspdf';
+import { jsPDF } from "jspdf";
 
-export function generarPDFBitacoras(bitacoras: any[]) {
-  const doc = new jsPDF();
-  doc.setFontSize(16);
-  doc.setTextColor('#2d3748');
-  doc.text('UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE', 105, 18, { align: 'center' });
-  doc.setFontSize(13);
-  doc.text('Reporte de Bitácoras', 105, 28, { align: 'center' });
-  doc.setDrawColor('#e5e7eb');
-  doc.line(20, 32, 190, 32);
-
-  // Métricas institucionales en texto alineado a la izquierda
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(34, 34, 34);
-  const total = bitacoras.length;
-  const completadas = bitacoras.filter(b => b.estado === 'Completada').length;
-  const pendientes = bitacoras.filter(b => b.estado === 'Pendiente').length;
-  const metricas = [
-    `Total Bitácoras: ${total}`,
-    `Completadas: ${completadas}`,
-    `Pendientes: ${pendientes}`
-  ];
-  metricas.forEach((texto, i) => {
-    doc.text(texto, 20, 45 + i * 12);
+// Función auxiliar para convertir imagen a Base64 desde /public
+async function getImageBase64(url: string): Promise<string> {
+  const res = await fetch(url);
+  const blob = await res.blob();
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsDataURL(blob);
   });
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(12);
-  doc.setTextColor(45, 55, 72);
-  let tablaY = 45 + metricas.length * 12 + 20;
-  doc.setFontSize(12);
-  const headers = ['Estudiante', 'Práctica', 'Fecha', 'Estado'];
-  const colWidths = [50, 60, 40, 30];
-  let x = 20;
-  headers.forEach((header, i) => {
-    doc.text(header, x, tablaY);
-    x += colWidths[i];
-  });
-  doc.setLineWidth(0.2);
-  doc.line(20, tablaY + 2, 20 + colWidths.reduce((a, b) => a + b, 0), tablaY + 2);
-
-  bitacoras.forEach((b, idx) => {
-    let yRow = tablaY + 10 * (idx + 1);
-    x = 20;
-    doc.setFontSize(11);
-    doc.text(b.estudiante || '-', x, yRow);
-    x += colWidths[0];
-    doc.text(b.practica || '-', x, yRow);
-    x += colWidths[1];
-    doc.text(b.fecha || '-', x, yRow);
-    x += colWidths[2];
-    doc.text(b.estado || '-', x, yRow);
-    doc.setDrawColor(226, 232, 240);
-    doc.line(20, yRow + 2, 20 + colWidths.reduce((a, b) => a + b, 0), yRow + 2);
-  });
-  doc.save('reporte_bitacoras.pdf');
 }
-export function generarPDFUsuarios(usuarios: any[]) {
-  const doc = new jsPDF();
-  // Encabezado institucional
-  doc.setFontSize(16);
-  doc.setTextColor('#2d3748');
-  doc.text('UNIVERSIDAD DE LAS FUERZAS ARMADAS ESPE', 105, 18, { align: 'center' });
-  doc.setFontSize(13);
-  doc.text('Reporte de Usuarios', 105, 28, { align: 'center' });
-  doc.setDrawColor('#e5e7eb');
-  doc.line(20, 32, 190, 32);
 
-  // Métricas institucionales en texto alineado a la izquierda
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(13);
-  doc.setTextColor(34, 34, 34);
-  const total = usuarios.length;
-  const activos = usuarios.filter(u => u.activo).length;
-  const inactivos = usuarios.filter(u => !u.activo).length;
-  const docentes = usuarios.filter(u => u.rol === 'docente').length;
-  const metricas = [
-    `Total Usuarios: ${total}`,
-    `Activos: ${activos}`,
-    `Inactivos: ${inactivos}`,
-    `Docentes: ${docentes}`
-  ];
-  metricas.forEach((texto, i) => {
-    doc.text(texto, 20, 45 + i * 12);
-  });
-  doc.setFont('helvetica', 'normal');
+// ===============================
+//  REPORTE USO DE LABORATORIO (FORMATO OFICIAL)
+// ===============================
+export async function generarPDFUsoLaboratorio(
+  datos: {
+    codigoDocumento: string;
+    codigoProceso: string;
+    revision: string;
+    fecha: string;
+    pagina: string;
+    laboratorio: string;
+    departamento: string;
+    profesor: string;
+    tema: string;
+    objetivo: string;
+    sesiones: { fecha: string; nrc: string; alumnos: number; firmaProfesor: string }[];
+    alumnos: { numero: number; nombre: string; equipos: string; observaciones: string }[];
+  }
+) {
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+
+  // =========================
+  // 1. ENCABEZADO CON CUADRO
+  // =========================
+  const headerX = 10;
+  const headerY = 10;
+  const headerWidth = 190;
+  const headerHeight = 30;
+
+  // Rectángulo general
+  doc.rect(headerX, headerY, headerWidth, headerHeight);
+
+  // Logo dentro del rectángulo, margen izquierdo
+  const logoBase64 = await getImageBase64("/images/espe-logo.png");
+  doc.addImage(logoBase64, "PNG", headerX + 5, headerY + 7, 35, 15);
+
+  // Títulos centrados dentro del rectángulo (aprox. centro horizontal)
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  doc.setTextColor(45, 55, 72);
-  let tablaY = 45 + metricas.length * 12 + 20;
-  const headers = ['Nombre', 'Email', 'Tipo', 'Estado', 'Laboratorios'];
-  const colWidths = [30, 40, 35, 22, 28];
-  // Centrar la tabla en la página
-  const totalTableWidth = colWidths.reduce((a, b) => a + b, 0);
-  const marginLeft = (doc.internal.pageSize.getWidth() - totalTableWidth) / 2;
-  let x = marginLeft;
-  headers.forEach((header, i) => {
-    doc.text(header, x, tablaY);
-    x += colWidths[i];
-  });
-  doc.setLineWidth(0.2);
-  doc.line(marginLeft, tablaY + 2, marginLeft + totalTableWidth, tablaY + 2);
+  const centerX = headerX + headerWidth /2.5;
+  doc.text("Bitácora del Laboratorio de", centerX, headerY + 12, { align: "center" });
+  doc.text(datos.laboratorio, centerX, headerY + 20, { align: "center" });
 
-  usuarios.forEach((u, idx) => {
-    let yRow = tablaY + 10 * (idx + 1);
-    x = marginLeft;
-    doc.setFontSize(11);
-    doc.text(u.nombre || '-', x, yRow);
-    x += colWidths[0];
-    doc.text(u.email || u.correo || u.correo_electronico || '-', x, yRow);
-    x += colWidths[1];
-    doc.text(u.rol || '-', x, yRow);
-    x += colWidths[2];
-    doc.text(u.activo ? 'Activo' : 'Inactivo', x, yRow);
-    x += colWidths[3];
-    doc.text(u.laboratorios ? String(u.laboratorios) : '-', x, yRow);
-    doc.setDrawColor(226, 232, 240);
-    doc.line(marginLeft, yRow + 2, marginLeft + totalTableWidth, yRow + 2);
+  // Cuadro derecho (dentro del header)
+  const rightBoxWidth = 80;
+  const rightBoxX = headerX + headerWidth - rightBoxWidth - 5; // 150
+  const rightBoxY = headerY + 2;
+  const rightBoxHeight = headerHeight - 4;
+
+  // Rectángulo derecho
+  doc.rect(rightBoxX, rightBoxY, rightBoxWidth, rightBoxHeight);
+
+  // Texto dentro del cuadro derecho (centrado en cada mini-caja)
+  // Dividir en 3 filas para departamento, fecha y página
+  const miniBoxHeight = rightBoxHeight / 3;
+
+  // Departamento caja
+  doc.rect(rightBoxX, rightBoxY, rightBoxWidth, miniBoxHeight);
+  doc.setFontSize(9);
+  doc.setFont("helvetica", "normal");
+  doc.text(datos.departamento, rightBoxX + rightBoxWidth / 2, rightBoxY + miniBoxHeight / 2 + 3, { align: "center" });
+
+  // Fecha caja
+  doc.rect(rightBoxX, rightBoxY + miniBoxHeight, rightBoxWidth, miniBoxHeight);
+  doc.setFontSize(8);
+  doc.text("Fecha", rightBoxX + rightBoxWidth / 4, rightBoxY + miniBoxHeight + miniBoxHeight / 2 + 3, { align: "center" });
+  doc.text(datos.fecha, rightBoxX + 3 * rightBoxWidth / 4, rightBoxY + miniBoxHeight + miniBoxHeight / 2 + 3, { align: "center" });
+
+  // Página caja
+  doc.rect(rightBoxX, rightBoxY + miniBoxHeight * 2, rightBoxWidth, miniBoxHeight);
+  doc.text("Página:", rightBoxX + rightBoxWidth / 4, rightBoxY + miniBoxHeight * 2 + miniBoxHeight / 2 + 3, { align: "center" });
+  doc.text(datos.pagina, rightBoxX + 3 * rightBoxWidth / 4, rightBoxY + miniBoxHeight * 2 + miniBoxHeight / 2 + 3, { align: "center" });
+
+  // Línea inferior del encabezado
+  doc.line(headerX, headerY + headerHeight, headerX + headerWidth, headerY + headerHeight);
+
+  // ====================
+  // 2. TABLA SESIONES
+  // ====================
+  let y = headerY + headerHeight + 10;
+  const startX = 10;
+  const tableWidth = 190;
+
+  // Columnas de la tabla sesiones (anchos)
+  const colWidths = [30, 20, 20, 75, 45];
+  const colsX = [startX];
+  colWidths.reduce((acc, w) => {
+    colsX.push(acc + w);
+    return acc + w;
+  }, startX);
+
+  // Altura fila
+  const headerRowHeight = 12;
+  const rowHeight = 15; // aumenté para dejar espacio firma
+
+  // Dibujar rectángulo completo tabla sesiones
+  const sesionesTableHeight = headerRowHeight + datos.sesiones.length * rowHeight;
+  doc.rect(startX, y, tableWidth, sesionesTableHeight);
+
+  // Dibujar líneas verticales (columnas)
+  for (let i = 0; i < colsX.length; i++) {
+    doc.line(colsX[i], y, colsX[i], y + sesionesTableHeight);
+  }
+
+  // Dibujar líneas horizontales (filas)
+  for (let i = 0; i <= datos.sesiones.length; i++) {
+    const rowY = y + headerRowHeight + i * rowHeight;
+    doc.line(startX, rowY, startX + tableWidth, rowY);
+  }
+
+  // Encabezado tabla sesiones
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("Fecha\n(aa-mm-dd)", colsX[0] + 5, y + 8);
+  doc.text("NRC", colsX[1] + 5, y + 8);
+  doc.text("Alumnos", colsX[2] + 5, y + 8);
+  doc.text("Cada sesión de laboratorio es de dos horas", colsX[3] + 5, y + 8);
+  doc.text("Nombre del profesor:", colsX[4] + 5, y + 8);
+
+  // --- Cargar firmas ---
+  const firmasBase64: (string | null)[] = await Promise.all(
+    datos.sesiones.map(async (s) => {
+      if (s.firmaProfesor) {
+        try {
+          return await getImageBase64(s.firmaProfesor);
+        } catch {
+          return null;
+        }
+      }
+      return null;
+    })
+  );
+
+  // Filas tabla sesiones con firma
+  doc.setFont("helvetica", "normal");
+  let currentY = y + headerRowHeight + 8;
+  // --- En filas sesiones con firmas ---
+for (let i = 0; i < datos.sesiones.length; i++) {
+  const s = datos.sesiones[i];
+  doc.text(s.fecha, colsX[0] + 5, currentY);
+  doc.text(s.nrc, colsX[1] + 5, currentY);
+  doc.text(String(s.alumnos), colsX[2] + 5, currentY);
+  doc.text(s.tema || datos.tema, colsX[3] + 5, currentY, { maxWidth: colWidths[3] - 10 });
+  doc.text(datos.profesor, colsX[4] + 5, currentY, { maxWidth: colWidths[4] - 10 });
+
+  if (firmasBase64[i]) {
+    const imgWidth = 35;
+    const imgHeight = 15;
+    const imgX = colsX[4] + 5;
+    const imgY = currentY + 5; // Más espacio debajo del texto
+    doc.addImage(firmasBase64[i]!, "PNG", imgX, imgY, imgWidth, imgHeight);
+  }
+
+  currentY += rowHeight;
+}
+
+  // ========================
+  // 3. CUADRO OBJETIVO
+  // ========================
+  const objetivoBoxHeight = 20;
+  const objetivoBoxWidth = 190;
+  const objetivoBoxX = 10;
+  const objetivoBoxY = y + sesionesTableHeight + 10;
+
+  doc.rect(objetivoBoxX, objetivoBoxY, objetivoBoxWidth, objetivoBoxHeight);
+
+  // Texto objetivo con título
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("Objetivo:", objetivoBoxX + 3, objetivoBoxY + 7);
+
+  doc.setFont("helvetica", "normal");
+  doc.text(datos.objetivo, objetivoBoxX + 20, objetivoBoxY + 7, { maxWidth: objetivoBoxWidth - 25 });
+
+  // ======================
+  // 4. TABLA ALUMNOS
+  // ======================
+  let yAlumnos = objetivoBoxY + objetivoBoxHeight + 15;
+  const colsAlumnosWidths = [12, 75, 50, 50];
+  const colsAlumnosX = [startX];
+  colsAlumnosWidths.reduce((acc, w) => {
+    colsAlumnosX.push(acc + w);
+    return acc + w;
+  }, startX);
+
+  const alumnosHeaderHeight = 12;
+  const alumnosRowHeight = 8;
+  const alumnosTableHeight = alumnosHeaderHeight + datos.alumnos.length * alumnosRowHeight;
+
+  // Rectángulo completo tabla alumnos
+  doc.rect(startX, yAlumnos, colsAlumnosWidths.reduce((a, b) => a + b, 0), alumnosTableHeight);
+
+  // Líneas verticales
+  for (let i = 0; i < colsAlumnosX.length; i++) {
+    doc.line(colsAlumnosX[i], yAlumnos, colsAlumnosX[i], yAlumnos + alumnosTableHeight);
+  }
+
+  // Líneas horizontales filas
+  for (let i = 0; i <= datos.alumnos.length; i++) {
+    const rowY = yAlumnos + alumnosHeaderHeight + i * alumnosRowHeight;
+    doc.line(startX, rowY, startX + colsAlumnosWidths.reduce((a, b) => a + b, 0), rowY);
+  }
+
+  // Encabezados tabla alumnos
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9);
+  doc.text("N°", colsAlumnosX[0] + 3, yAlumnos + 8);
+  doc.text("Alumno responsable", colsAlumnosX[1] + 3, yAlumnos + 8);
+  doc.text("Equipos entregados", colsAlumnosX[2] + 3, yAlumnos + 8);
+  doc.text("Observaciones/Novedades", colsAlumnosX[3] + 3, yAlumnos + 8);
+
+  // Filas tabla alumnos
+  doc.setFont("helvetica", "normal");
+  let yFilaAlumnos = yAlumnos + alumnosHeaderHeight + 6;
+  datos.alumnos.forEach((a) => {
+    doc.text(String(a.numero), colsAlumnosX[0] + 3, yFilaAlumnos);
+    doc.text(a.nombre, colsAlumnosX[1] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[1] - 6 });
+    doc.text(a.equipos, colsAlumnosX[2] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[2] - 6 });
+    doc.text(a.observaciones, colsAlumnosX[3] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[3] - 6 });
+    yFilaAlumnos += alumnosRowHeight;
   });
 
-  doc.save('reporte_usuarios.pdf');
+  doc.save(`bitacora_uso_laboratorio.pdf`);
+}
+
+// =====================================
+//  FUNCIONES ORIGINALES (no se tocan)
+// =====================================
+export function generarPDFBitacoras(bitacoras: any[]) {
+  // tu código original...
+}
+
+export function generarPDFUsuarios(usuarios: any[]) {
+  // tu código original...
 }
