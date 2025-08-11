@@ -63,33 +63,90 @@ const usuarioController = {
       console.error("Error en login:", error)
       res.status(500).json({
         success: false,
-        message: "Error interno del servidor"
+        message: "Error interno del servidor",
+        code: "INTERNAL_SERVER_ERROR"
       })
     }
   },
 
   // Verificar token (para el contexto de auth del frontend)
   verify: async (req, res) => {
+    console.log('=== Inicio de verificación de token ===');
+    console.log('Token recibido:', req.token);
+    console.log('Usuario en request:', req.user ? 'Sí' : 'No');
+    
     try {
-      // El middleware auth ya validó todo, solo devolver datos del usuario
+      if (!req.user || !req.user.id) {
+        console.error('Error: No hay usuario en la solicitud o falta el ID');
+        return res.status(401).json({
+          success: false,
+          message: "Usuario no autenticado",
+          code: "UNAUTHORIZED"
+        });
+      }
+
+      // Verificar que el usuario existe en la base de datos
+      const usuario = await Usuario.findByPk(req.user.id, {
+        attributes: ['id', 'nombre', 'correo', 'rol', 'provider', 'avatar', 'activeToken', 'tokenSignature']
+      });
+
+      if (!usuario) {
+        console.error('Error: Usuario no encontrado en la base de datos');
+        return res.status(401).json({
+          success: false,
+          message: "Usuario no encontrado",
+          code: "USER_NOT_FOUND"
+        });
+      }
+
+      console.log('Usuario encontrado en BD:', {
+        id: usuario.id,
+        correo: usuario.correo,
+        activeToken: usuario.activeToken ? 'Presente' : 'Ausente',
+        tokenSignature: usuario.tokenSignature ? 'Presente' : 'Ausente'
+      });
+
+      // Verificar token único con TokenManager
+      try {
+        console.log('Verificando token con TokenManager...');
+        await TokenManager.verifyUniqueToken(req.token, usuario);
+        console.log('Token verificado exitosamente');
+      } catch (tokenError) {
+        console.error('Error al verificar token único:', tokenError.message);
+        return res.status(401).json({
+          success: false,
+          message: "Sesión inválida o expirada",
+          code: "TOKEN_INVALID",
+          debug: {
+            error: tokenError.message,
+            tokenReceived: req.token,
+            expectedToken: usuario.activeToken
+          }
+        });
+      }
+
+      // Datos seguros para enviar al frontend
+      console.log('Preparando respuesta exitosa');
+      const userData = {
+        id: usuario.id,
+        nombre: usuario.nombre,
+        correo: usuario.correo,
+        rol: usuario.rol,
+        provider: usuario.provider,
+        avatar: usuario.avatar
+      };
+
       res.json({
         success: true,
-        data: {
-          usuario: {
-            id: req.user.id,
-            nombre: req.user.nombre,
-            correo: req.user.correo,
-            rol: req.user.rol,
-            provider: req.user.provider,
-            avatar: req.user.avatar
-          }
-        }
-      })
+        data: { usuario: userData }
+      });
     } catch (error) {
+      console.error('Error en verify:', error);
       res.status(500).json({
         success: false,
-        message: "Error al verificar token"
-      })
+        message: "Error al verificar la sesión",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   },
 
@@ -103,41 +160,65 @@ const usuarioController = {
         message: "Logout exitoso"
       })
     } catch (error) {
+      console.error('Error en logout:', error);
       res.status(500).json({
         success: false,
-        message: "Error al cerrar sesión"
-      })
+        message: "Error al cerrar sesión",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   },
 
   // Callback exitoso de OAuth (para redirección)
   oauthSuccess: async (req, res) => {
+    console.log('=== OAuth Success Callback ===');
+    console.log('Usuario autenticado:', req.user ? 'Sí' : 'No');
+    
+    if (!req.user) {
+      console.error('Error en autenticación OAuth: No se encontró el usuario');
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      return res.redirect(`${frontendUrl}/login?error=oauth_failed`);
+    }
+    
     try {
-      if (!req.user) {
-        return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?error=oauth_failed`)
-      }
-
+      console.log('Datos del usuario autenticado:', {
+        id: req.user.id,
+        correo: req.user.correo,
+        provider: req.user.provider
+      });
+      
       // Extraer información del dispositivo
-      const deviceInfo = TokenManager.extractDeviceInfo(req)
+      const deviceInfo = TokenManager.extractDeviceInfo(req);
+      console.log('Información del dispositivo:', deviceInfo);
 
       // Generar token único
-      const token = await TokenManager.setUniqueToken(req.user, deviceInfo)
+      const token = await TokenManager.setUniqueToken(req.user, deviceInfo);
+      console.log('Token generado exitosamente');
 
-      // Redireccionar al frontend con el token
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
-      res.redirect(`${frontendUrl}/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify({
+      // Preparar datos del usuario para el frontend
+      const userData = {
         id: req.user.id,
         nombre: req.user.nombre,
         correo: req.user.correo,
         rol: req.user.rol,
         provider: req.user.provider,
         avatar: req.user.avatar
-      }))}`)
+      };
+      
+      // Codificar los datos del usuario para la URL
+      const userDataString = encodeURIComponent(JSON.stringify(userData));
+      
+      // Redireccionar al frontend con el token y los datos del usuario
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      const redirectUrl = `${frontendUrl}/oauth-callback?token=${token}&user=${userDataString}`;
+      
+      console.log('Redirigiendo a:', redirectUrl);
+      return res.redirect(redirectUrl);
       
     } catch (error) {
-      console.error("Error en OAuth callback:", error)
-      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
-      res.redirect(`${frontendUrl}?error=oauth_error`)
+      console.error("Error en OAuth callback:", error);
+      const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+      return res.redirect(`${frontendUrl}/login?error=oauth_error`);
     }
   },
 
@@ -173,10 +254,12 @@ const usuarioController = {
       })
 
     } catch (error) {
+      console.error('Error en crear usuario:', error);
       res.status(500).json({
         success: false,
-        message: "Error al crear usuario"
-      })
+        message: "Error al crear usuario",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   },
 
@@ -211,10 +294,12 @@ const usuarioController = {
       })
 
     } catch (error) {
+      console.error('Error en cambiar contraseña:', error);
       res.status(500).json({
         success: false,
-        message: "Error al cambiar contraseña"
-      })
+        message: "Error al cambiar contraseña",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   },
 
@@ -230,10 +315,12 @@ const usuarioController = {
         data: usuarios
       })
     } catch (error) {
+      console.error('Error en obtener usuarios:', error);
       res.status(500).json({
         success: false,
-        message: "Error al obtener usuarios"
-      })
+        message: "Error al obtener usuarios",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   },
 
@@ -256,10 +343,12 @@ const usuarioController = {
         data: usuario
       })
     } catch (error) {
+      console.error('Error en obtener usuario:', error);
       res.status(500).json({
         success: false,
-        message: "Error al obtener usuario"
-      })
+        message: "Error al obtener usuario",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   },
 
@@ -276,10 +365,12 @@ const usuarioController = {
         data: usuarios
       })
     } catch (error) {
+      console.error('Error en obtener usuarios por rol:', error);
       res.status(500).json({
         success: false,
-        message: "Error al obtener usuarios por rol"
-      })
+        message: "Error al obtener usuarios por rol",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   },
 
@@ -308,10 +399,12 @@ const usuarioController = {
         data: usuarioActualizado
       })
     } catch (error) {
+      console.error('Error en actualizar usuario:', error);
       res.status(500).json({
         success: false,
-        message: "Error al actualizar usuario"
-      })
+        message: "Error al actualizar usuario",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   },
 
@@ -336,55 +429,14 @@ const usuarioController = {
         message: "Usuario eliminado exitosamente"
       })
     } catch (error) {
+      console.error('Error en eliminar usuario:', error);
       res.status(500).json({
         success: false,
-        message: "Error al eliminar usuario"
-      })
+        message: "Error al eliminar usuario",
+        code: "INTERNAL_SERVER_ERROR"
+      });
     }
   }
 }
-// Callback exitoso de OAuth (para redirección)
-oauthSuccess: async (req, res) => {
-  try {
-    console.log('=== OAuth Success Callback ===')
-    console.log('req.user:', req.user)
-    
-    if (!req.user) {
-      console.error('No user found in OAuth callback')
-      return res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}?error=oauth_failed`)
-    }
 
-    // Extraer información del dispositivo
-    const deviceInfo = TokenManager.extractDeviceInfo(req)
-    console.log('Device info:', deviceInfo)
-
-    // Generar token único
-    const token = await TokenManager.setUniqueToken(req.user, deviceInfo)
-    console.log('Generated token for user:', req.user.correo)
-
-    // Preparar datos del usuario para el frontend
-    const userData = {
-      id: req.user.id,
-      nombre: req.user.nombre,
-      correo: req.user.correo,
-      rol: req.user.rol,
-      provider: req.user.provider,
-      avatar: req.user.avatar
-    }
-    
-    console.log('User data to send:', userData)
-
-    // Redireccionar al frontend con el token
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
-    const redirectUrl = `${frontendUrl}/oauth-callback?token=${token}&user=${encodeURIComponent(JSON.stringify(userData))}`
-    
-    console.log('Redirecting to:', redirectUrl)
-    res.redirect(redirectUrl)
-    
-  } catch (error) {
-    console.error("Error en OAuth callback:", error)
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000'
-    res.redirect(`${frontendUrl}?error=oauth_error`)
-  }
-}
-module.exports = usuarioController
+module.exports = usuarioController;

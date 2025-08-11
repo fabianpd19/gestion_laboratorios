@@ -15,17 +15,34 @@ router.post("/", usuarioController.crear)
 
 // Google OAuth
 router.get("/auth/google", 
+  (req, res, next) => {
+    console.log('Iniciando autenticación con Google...');
+    next();
+  },
   passport.authenticate('google', { 
-    scope: ['profile', 'email'] 
+    scope: ['profile', 'email'],
+    accessType: 'offline',
+    prompt: 'consent'
   })
 )
 
 router.get("/auth/google/callback",
+  (req, res, next) => {
+    console.log('Recibiendo callback de Google...');
+    next();
+  },
   passport.authenticate('google', { 
-    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}?error=google_auth_failed`,
-    session: false 
+    failureRedirect: `${process.env.FRONTEND_URL || 'http://localhost:3000'}/login?error=google_auth_failed`,
+    session: false,
+    failWithError: true
   }),
-  usuarioController.oauthSuccess
+  usuarioController.oauthSuccess,
+  // Manejo de errores
+  (err, req, res, next) => {
+    console.error('Error en autenticación con Google:', err);
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/login?error=google_auth_error`);
+  }
 )
 
 

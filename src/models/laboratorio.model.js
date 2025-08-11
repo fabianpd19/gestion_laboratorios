@@ -18,12 +18,14 @@ const Laboratorio = sequelize.define(
       allowNull: true,
     },
     responsable_id: {
-      type: DataTypes.INTEGER,
+      type: DataTypes.UUID,
       allowNull: true,
       references: {
         model: "usuarios",
         key: "id",
       },
+      onDelete: 'SET NULL',
+      onUpdate: 'CASCADE'
     },
   },
   {
