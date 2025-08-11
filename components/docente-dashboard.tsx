@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -24,6 +25,7 @@ interface DocenteDashboardProps {
 
 export function DocenteDashboard({ user }: DocenteDashboardProps) {
   const { logout } = useAuth()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
 
   // Datos simulados (aquí irán las APIs)
@@ -87,12 +89,12 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
 
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Bitácoras Pendientes</CardTitle>
+                  <CardTitle className="text-sm font-medium">Bitácoras en Proceso</CardTitle>
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
                   <div className="text-2xl font-bold">
-                    {bitacoras.filter((b) => b.estado === "pendiente").length}
+                    {bitacoras.filter((b) => b.estado === "borrador" || b.estado === "en_sesion").length}
                   </div>
                 </CardContent>
               </Card>
@@ -187,13 +189,13 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                       <tbody>
                         {bitacoras.map((bitacora) => (
                           <tr key={bitacora.id} className="border-t">
-                            <td className="px-4 py-2">{bitacora.nombre_profesor}</td>
+                            <td className="px-4 py-2">{bitacora.titulo_laboratorio}</td>
                             <td className="px-4 py-2">{bitacora.tema}</td>
                             <td className="px-4 py-2">{bitacora.fecha_bitacora}</td>
                             <td className="px-4 py-2">
                               <span
                                 className={`px-2 py-1 rounded-full text-xs ${
-                                  bitacora.estado === "completada"
+                                  bitacora.estado === "completada" || bitacora.estado === "firmada"
                                     ? "bg-green-100 text-green-800"
                                     : "bg-yellow-100 text-yellow-800"
                                 }`}
@@ -247,7 +249,7 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                     <p className="text-gray-600">{user.id}</p>
                   </div>
                 </div>
-                <Button>
+                <Button onClick={() => router.push('/perfil')}>
                   <Settings className="w-4 h-4 mr-2" />
                   Editar Perfil
                 </Button>

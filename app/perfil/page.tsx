@@ -36,7 +36,15 @@ export default function PerfilPage() {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-2xl font-bold mb-6">Mi Perfil</h1>
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Mi Perfil</h1>
+        <Button
+          variant="outline"
+          onClick={() => router.push('/dashboard')}
+        >
+          Regresar al Dashboard
+        </Button>
+      </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Columna izquierda - Información del perfil */}

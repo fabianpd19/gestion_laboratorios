@@ -266,12 +266,12 @@ const usuarioController = {
   // Cambiar contraseña (invalida todas las sesiones)
   cambiarPassword: async (req, res) => {
     try {
-      const { passwordActual, passwordNueva } = req.body
+      const { currentPassword, newPassword, isOAuthUser } = req.body
       const usuario = req.user
 
-      // Validar contraseña actual solo si el usuario tiene password local
-      if (usuario.provider === 'local' && usuario.password) {
-        const passwordValido = await usuario.validarPassword(passwordActual)
+      // Validar contraseña actual solo si el usuario tiene password local y no es un cambio desde OAuth
+      if (!isOAuthUser && usuario.provider === 'local' && usuario.password) {
+        const passwordValido = await usuario.validarPassword(currentPassword)
         if (!passwordValido) {
           return res.status(400).json({
             success: false,
@@ -281,8 +281,14 @@ const usuarioController = {
       }
 
       // Actualizar contraseña
-      usuario.password = passwordNueva
-      usuario.provider = 'local' // Cambiar a local si era OAuth
+      usuario.password = newPassword
+      
+      // Si el usuario era OAuth, ahora también tendrá acceso local
+      // pero mantenemos su provider original para que pueda seguir usando OAuth
+      if (usuario.provider !== 'local') {
+        console.log(`Usuario ${usuario.correo} ahora tiene acceso dual: ${usuario.provider} y local`)
+      }
+      
       await usuario.save()
 
       // Invalidar todas las sesiones (forzar re-login)

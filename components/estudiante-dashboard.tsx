@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -25,6 +26,7 @@ interface EstudianteDashboardProps {
 
 export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
   const { logout } = useAuth()
+  const router = useRouter()
   const [activeTab, setActiveTab] = useState("overview")
   const [showBitacoraForm, setShowBitacoraForm] = useState(false)
   const [showEquipoForm, setShowEquipoForm] = useState(false)
@@ -374,7 +376,7 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
                     <p className="text-gray-600">{user.id}</p>
                   </div>
                 </div>
-                <Button>
+                <Button onClick={() => router.push('/perfil')}>
                   <Settings className="w-4 h-4 mr-2" />
                   Editar Perfil
                 </Button>
