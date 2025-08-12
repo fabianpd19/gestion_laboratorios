@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { CambiarPasswordForm } from "@/components/perfil/cambiar-password-form"
+import { ArrowLeft } from "lucide-react"
 
 export default function PerfilPage() {
   const { user, loading } = useAuth()
@@ -41,7 +42,9 @@ export default function PerfilPage() {
         <Button
           variant="outline"
           onClick={() => router.push('/dashboard')}
+          className="flex items-center gap-2"
         >
+          <ArrowLeft className="h-4 w-4" />
           Regresar al Dashboard
         </Button>
       </div>
