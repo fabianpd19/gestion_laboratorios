@@ -9,7 +9,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { AlertCircle, CheckCircle2 } from "lucide-react"
 
 export function CambiarPasswordForm() {
-  const { user, isOAuthUser, logout } = useAuth()
+  const { user, isOAuthUser, logout, token } = useAuth()
   const [currentPassword, setCurrentPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -46,10 +46,12 @@ export function CambiarPasswordForm() {
     try {
       setLoading(true)
       
-      const response = await fetch("/api/usuarios/cambiar-password", {
-        method: "POST",
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${apiUrl}/api/usuarios/cambiar-password`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": token ? `Bearer ${token}` : ""
         },
         body: JSON.stringify({
           currentPassword: isOAuthUser ? null : currentPassword,
@@ -61,7 +63,15 @@ export function CambiarPasswordForm() {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.message || "Error al cambiar la contraseña")
+        if (response.status === 401) {
+          setError("No autorizado. Redirigiendo al inicio de sesión...")
+          setTimeout(() => {
+            logout()
+          }, 2000)
+          return
+        } else {
+          throw new Error(data.message || "Error al cambiar la contraseña")
+        }
       }
       
       setSuccess(true)
