@@ -1,98 +1,108 @@
-const usoLaboratorioRepository = require("../repositories/usoLaboratorio.repository")
-const laboratorioService = require("./laboratorio.service")
-const usuarioService = require("./usuario.service")
+const usoLaboratorioRepository = require("../repositories/usoLaboratorio.repository");
+const laboratorioService = require("./laboratorio.service");
+const usuarioService = require("./usuario.service");
 
 class UsoLaboratorioService {
   async registrarUso(datosUso) {
     try {
-      // Validar que el usuario existe
-      await usuarioService.obtenerUsuario(datosUso.usuario_id)
+      // Validar que el usuario existe (idealmente viene del token, no debe enviarse en body)
+      await usuarioService.obtenerUsuario(datosUso.usuario_id);
 
       // Validar que el laboratorio existe
-      await laboratorioService.obtenerLaboratorio(datosUso.laboratorio_id)
+      await laboratorioService.obtenerLaboratorio(datosUso.laboratorio_id);
 
       // Validar capacidad del laboratorio
-      await laboratorioService.validarCapacidad(datosUso.laboratorio_id, datosUso.numero_estudiantes)
+      await laboratorioService.validarCapacidad(datosUso.laboratorio_id, datosUso.numero_estudiantes);
 
       // Validar que la fecha de inicio no sea en el pasado
-      const fechaInicio = new Date(datosUso.fecha_inicio)
-      const ahora = new Date()
-
+      const fechaInicio = new Date(datosUso.fecha_inicio);
+      const ahora = new Date();
       if (fechaInicio < ahora) {
-        throw new Error("La fecha de inicio no puede ser en el pasado")
+        throw new Error("La fecha de inicio no puede ser en el pasado");
       }
 
       // Validar que la fecha de fin sea posterior a la de inicio (si se proporciona)
       if (datosUso.fecha_fin) {
-        const fechaFin = new Date(datosUso.fecha_fin)
+        const fechaFin = new Date(datosUso.fecha_fin);
         if (fechaFin <= fechaInicio) {
-          throw new Error("La fecha de fin debe ser posterior a la fecha de inicio")
+          throw new Error("La fecha de fin debe ser posterior a la fecha de inicio");
         }
       }
 
-      return await usoLaboratorioRepository.crear(datosUso)
+      // Validar estado permitido al crear (normalmente 'programado' o vacío)
+      const estadosValidos = ["programado", "en_curso", "finalizado", "cancelado"];
+      if (datosUso.estado && !estadosValidos.includes(datosUso.estado.toLowerCase())) {
+        throw new Error(`Estado inválido. Debe ser uno de: ${estadosValidos.join(", ")}`);
+      }
+
+      // Validar que se seleccione equipo (no crear equipo desde aquí)
+      if (!datosUso.equipo_id) {
+        throw new Error("Debe seleccionar un equipo válido");
+      }
+
+      return await usoLaboratorioRepository.crear(datosUso);
     } catch (error) {
-      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`)
+      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`);
     }
   }
 
   async obtenerUso(id) {
     try {
-      const uso = await usoLaboratorioRepository.obtenerPorId(id)
+      const uso = await usoLaboratorioRepository.obtenerPorId(id);
       if (!uso) {
-        throw new Error("Uso de laboratorio no encontrado")
+        throw new Error("Uso de laboratorio no encontrado");
       }
-      return uso
+      return uso;
     } catch (error) {
-      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`)
+      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`);
     }
   }
 
   async obtenerUsos(filtros = {}) {
     try {
-      return await usoLaboratorioRepository.obtenerTodos(filtros)
+      return await usoLaboratorioRepository.obtenerTodos(filtros);
     } catch (error) {
-      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`)
+      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`);
     }
   }
 
   async obtenerHistorialLaboratorio(laboratorioId, filtros = {}) {
     try {
       // Validar que el laboratorio existe
-      await laboratorioService.obtenerLaboratorio(laboratorioId)
+      await laboratorioService.obtenerLaboratorio(laboratorioId);
 
-      return await usoLaboratorioRepository.obtenerPorLaboratorio(laboratorioId, filtros)
+      return await usoLaboratorioRepository.obtenerPorLaboratorio(laboratorioId, filtros);
     } catch (error) {
-      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`)
+      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`);
     }
   }
 
   async actualizarUso(id, datosActualizacion) {
     try {
       // Validar que el uso existe
-      const usoExistente = await this.obtenerUso(id)
+      const usoExistente = await this.obtenerUso(id);
 
-      // Validar transiciones de estado
+      // Validar transiciones de estado si se cambia estado
       if (datosActualizacion.estado) {
-        this.validarTransicionEstado(usoExistente.estado, datosActualizacion.estado)
+        this.validarTransicionEstado(usoExistente.estado, datosActualizacion.estado);
       }
 
-      // Si se actualiza la fecha de fin, marcar como finalizado
+      // Si se actualiza fecha_fin y no hay estado, poner estado finalizado
       if (datosActualizacion.fecha_fin && !datosActualizacion.estado) {
-        datosActualizacion.estado = "finalizado"
+        datosActualizacion.estado = "finalizado";
       }
 
-      return await usoLaboratorioRepository.actualizar(id, datosActualizacion)
+      return await usoLaboratorioRepository.actualizar(id, datosActualizacion);
     } catch (error) {
-      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`)
+      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`);
     }
   }
 
   async eliminarUso(id) {
     try {
-      return await usoLaboratorioRepository.eliminar(id)
+      return await usoLaboratorioRepository.eliminar(id);
     } catch (error) {
-      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`)
+      throw new Error(`Error en servicio de uso de laboratorio: ${error.message}`);
     }
   }
 
@@ -101,9 +111,9 @@ class UsoLaboratorioService {
       return await this.actualizarUso(id, {
         estado: "en_curso",
         fecha_inicio: new Date(),
-      })
+      });
     } catch (error) {
-      throw new Error(`Error al iniciar uso: ${error.message}`)
+      throw new Error(`Error al iniciar uso: ${error.message}`);
     }
   }
 
@@ -113,16 +123,16 @@ class UsoLaboratorioService {
         estado: "finalizado",
         fecha_fin: new Date(),
         ...datosFinalizacion,
-      })
+      });
     } catch (error) {
-      throw new Error(`Error al finalizar uso: ${error.message}`)
+      throw new Error(`Error al finalizar uso: ${error.message}`);
     }
   }
 
   async generarReporte(filtros = {}) {
     try {
-      const usos = await this.obtenerUsos(filtros)
-      const estadisticas = await usoLaboratorioRepository.obtenerEstadisticas(filtros)
+      const usos = await this.obtenerUsos(filtros);
+      const estadisticas = await usoLaboratorioRepository.obtenerEstadisticas(filtros);
 
       return {
         usos,
@@ -132,11 +142,11 @@ class UsoLaboratorioService {
           usos_finalizados: usos.filter((uso) => uso.estado === "finalizado").length,
           usos_en_curso: usos.filter((uso) => uso.estado === "en_curso").length,
           usos_programados: usos.filter((uso) => uso.estado === "programado").length,
-          promedio_estudiantes: usos.reduce((sum, uso) => sum + uso.numero_estudiantes, 0) / usos.length || 0,
+          promedio_estudiantes: usos.reduce((sum, uso) => sum + uso.numero_estudiantes, 0) / (usos.length || 1),
         },
-      }
+      };
     } catch (error) {
-      throw new Error(`Error al generar reporte: ${error.message}`)
+      throw new Error(`Error al generar reporte: ${error.message}`);
     }
   }
 
@@ -146,12 +156,12 @@ class UsoLaboratorioService {
       en_curso: ["finalizado", "cancelado"],
       finalizado: [],
       cancelado: ["programado"],
-    }
+    };
 
-    if (!transicionesValidas[estadoActual].includes(nuevoEstado)) {
-      throw new Error(`Transición de estado inválida: ${estadoActual} -> ${nuevoEstado}`)
+    if (!transicionesValidas[estadoActual]?.includes(nuevoEstado)) {
+      throw new Error(`Transición de estado inválida: ${estadoActual} -> ${nuevoEstado}`);
     }
   }
 }
 
-module.exports = new UsoLaboratorioService()
+module.exports = new UsoLaboratorioService();
