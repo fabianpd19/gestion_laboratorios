@@ -1,3 +1,4 @@
+const jwt = require('jsonwebtoken')
 const Usuario = require("../models/usuario.model")
 const TokenManager = require("../../utils/tokenManager")
 

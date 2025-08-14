@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useAuth } from "@/contexts/auth-context"
 import { BookOpen, Users, FileText, Settings, LogOut, GraduationCap, Clock, ArrowLeft } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
+import { PasswordChangeForm } from "@/components/password-change-form"
 
 interface Materia {
   id: string
@@ -435,6 +436,17 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                     <p className="text-sm text-gray-600">Pendientes de Revisión</p>
                   </div>
                 </div>
+              </CardContent>
+            </Card>
+
+            {/* Cambio de Contraseña */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Seguridad</CardTitle>
+                <CardDescription>Cambiar contraseña y configuración de seguridad</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PasswordChangeForm />
               </CardContent>
             </Card>
           </TabsContent>

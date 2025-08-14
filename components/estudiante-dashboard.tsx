@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/auth-context"
 import { BookOpen, FileText, Settings, LogOut, Plus, CheckCircle } from "lucide-react"
 import { BitacoraForm } from "@/components/bitacora-form"
 import { EquipoForm } from "@/components/agregarEquipo-form"
+import { PasswordChangeForm } from "@/components/password-change-form"
 import Swal from 'sweetalert2';
 
 
@@ -174,7 +175,7 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
                   <BookOpen className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{materias.length}</div>
+                  <div className="text-2xl font-bold">{materias?.length || 0}</div>
                 </CardContent>
               </Card>
 
@@ -184,7 +185,7 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
                   <FileText className="h-4 w-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{practicas.filter((p) => p.id).length}</div>
+                  <div className="text-2xl font-bold">{practicas?.filter((p) => p?.id)?.length || 0}</div>
                 </CardContent>
               </Card>
 
@@ -393,6 +394,16 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
                 <Button variant="outline" className="mt-4 bg-transparent">
                   Descargar Historial
                 </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Seguridad</CardTitle>
+                <CardDescription>Cambiar contraseña y configuración de seguridad</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PasswordChangeForm />
               </CardContent>
             </Card>
           </TabsContent>
