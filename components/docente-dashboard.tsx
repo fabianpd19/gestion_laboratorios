@@ -1,6 +1,8 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import JSZip from "jszip"
+import { saveAs } from "file-saver"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
@@ -384,7 +386,37 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
                         <DialogDescription>Listado de asignaturas y su avance</DialogDescription>
                       </DialogHeader>
                     <div className="flex justify-end mb-4">
-                      <Button variant="outline" onClick={() => alert('Descargar reporte de asignaturas (simulado)')}>Descargar Reporte</Button>
+                      <Button
+                        variant="outline"
+                        onClick={async () => {
+                          try {
+                            const zip = new JSZip();
+                            // Rutas públicas (asegúrate de que el PDF esté en /public)
+                            const pdfUrls = [
+                              "/202550_GLAB_P3_N2_NRC_Aplicaciones_Distribuidas.pdf",
+                              "/202550_GLAB_P3_N2_NRC_Aplicaciones_Distribuidas.pdf"
+                            ];
+                            const pdfNames = [
+                              "Guia1.pdf",
+                              "Guia2.pdf"
+                            ];
+                            for (let i = 0; i < pdfUrls.length; i++) {
+                              const response = await fetch(pdfUrls[i]);
+                              if (!response.ok) {
+                                throw new Error(`No se pudo descargar el archivo: ${pdfUrls[i]}`);
+                              }
+                              const blob = await response.blob();
+                              zip.file(pdfNames[i], blob);
+                            }
+                            const zipBlob = await zip.generateAsync({ type: "blob" });
+                            saveAs(zipBlob, "asignaturas_y_guias.zip");
+                          } catch (err: any) {
+                            alert("Error al exportar ZIP: " + (err?.message || err));
+                          }
+                        }}
+                      >
+                        Exportar Reporte y Guías (ZIP)
+                      </Button>
                     </div>
                       {/* Cuadros resumen de asignaturas */}
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
