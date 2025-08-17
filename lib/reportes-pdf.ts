@@ -33,7 +33,7 @@ export async function generarPDFUsoLaboratorio(
   const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
 
   // =========================
-  // 1. ENCABEZADO CON CUADRO
+  // 1. ENCABEZADO MEJORADO
   // =========================
   const headerX = 10;
   const headerY = 10;
@@ -43,49 +43,44 @@ export async function generarPDFUsoLaboratorio(
   // Rectángulo general
   doc.rect(headerX, headerY, headerWidth, headerHeight);
 
-  // Logo dentro del rectángulo, margen izquierdo
+  // Logo ESPE a la izquierda
   const logoBase64 = await getImageBase64("/images/espe-logo.png");
-  doc.addImage(logoBase64, "PNG", headerX + 5, headerY + 7, 35, 15);
+  doc.addImage(logoBase64, "PNG", headerX + 4, headerY + 4, 38, 22);
 
-  // Títulos centrados dentro del rectángulo (aprox. centro horizontal)
+  // Título centrado en dos líneas
   doc.setFont("helvetica", "bold");
   doc.setFontSize(12);
-  const centerX = headerX + headerWidth /2.5;
+  const centerX = headerX + headerWidth / 2;
   doc.text("Bitácora del Laboratorio de", centerX, headerY + 12, { align: "center" });
-  doc.text(datos.laboratorio, centerX, headerY + 20, { align: "center" });
+  doc.text(datos.laboratorio, centerX, headerY + 19, { align: "center" });
 
-  // Cuadro derecho (dentro del header)
+  // Cuadro derecho (departamento, fecha, página)
   const rightBoxWidth = 80;
-  const rightBoxX = headerX + headerWidth - rightBoxWidth - 5; // 150
-  const rightBoxY = headerY + 2;
-  const rightBoxHeight = headerHeight - 4;
-
-  // Rectángulo derecho
+  const rightBoxX = headerX + headerWidth - rightBoxWidth;
+  const rightBoxY = headerY;
+  const rightBoxHeight = headerHeight;
   doc.rect(rightBoxX, rightBoxY, rightBoxWidth, rightBoxHeight);
 
-  // Texto dentro del cuadro derecho (centrado en cada mini-caja)
-  // Dividir en 3 filas para departamento, fecha y página
-  const miniBoxHeight = rightBoxHeight / 3;
-
-  // Departamento caja
-  doc.rect(rightBoxX, rightBoxY, rightBoxWidth, miniBoxHeight);
+  // Departamento (arriba)
   doc.setFontSize(9);
   doc.setFont("helvetica", "normal");
-  doc.text(datos.departamento, rightBoxX + rightBoxWidth / 2, rightBoxY + miniBoxHeight / 2 + 3, { align: "center" });
-
-  // Fecha caja
-  doc.rect(rightBoxX, rightBoxY + miniBoxHeight, rightBoxWidth, miniBoxHeight);
+  doc.text(datos.departamento, rightBoxX + rightBoxWidth / 2, rightBoxY + 7, { align: "center" });
+  // Línea separadora
+  doc.line(rightBoxX, rightBoxY + 10, rightBoxX + rightBoxWidth, rightBoxY + 10);
+  // Fecha y página
   doc.setFontSize(8);
-  doc.text("Fecha", rightBoxX + rightBoxWidth / 4, rightBoxY + miniBoxHeight + miniBoxHeight / 2 + 3, { align: "center" });
-  doc.text(datos.fecha, rightBoxX + 3 * rightBoxWidth / 4, rightBoxY + miniBoxHeight + miniBoxHeight / 2 + 3, { align: "center" });
-
-  // Página caja
-  doc.rect(rightBoxX, rightBoxY + miniBoxHeight * 2, rightBoxWidth, miniBoxHeight);
-  doc.text("Página:", rightBoxX + rightBoxWidth / 4, rightBoxY + miniBoxHeight * 2 + miniBoxHeight / 2 + 3, { align: "center" });
-  doc.text(datos.pagina, rightBoxX + 3 * rightBoxWidth / 4, rightBoxY + miniBoxHeight * 2 + miniBoxHeight / 2 + 3, { align: "center" });
+  doc.text("Fecha", rightBoxX + 15, rightBoxY + 17);
+  doc.text(datos.fecha, rightBoxX + 35, rightBoxY + 17);
+  doc.text("Página:", rightBoxX + 15, rightBoxY + 24);
+  doc.text(datos.pagina, rightBoxX + 35, rightBoxY + 24);
 
   // Línea inferior del encabezado
   doc.line(headerX, headerY + headerHeight, headerX + headerWidth, headerY + headerHeight);
+
+  // Línea "PAO" antes de la tabla principal
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text("PAO", headerX, headerY + headerHeight + 7);
 
   // ====================
   // 2. TABLA SESIONES
@@ -189,15 +184,16 @@ for (let i = 0; i < datos.sesiones.length; i++) {
   // 4. TABLA ALUMNOS
   // ======================
   let yAlumnos = objetivoBoxY + objetivoBoxHeight + 15;
-  const colsAlumnosWidths = [12, 75, 50, 50];
+  // Ajuste de anchos: N° (12), Alumno responsable (55), Equipos entregados (80), Observaciones/Novedades (43)
+  const colsAlumnosWidths = [12, 55, 80, 43];
   const colsAlumnosX = [startX];
   colsAlumnosWidths.reduce((acc, w) => {
     colsAlumnosX.push(acc + w);
     return acc + w;
   }, startX);
 
-  const alumnosHeaderHeight = 12;
-  const alumnosRowHeight = 8;
+  const alumnosHeaderHeight = 13;
+  const alumnosRowHeight = 13;
   const alumnosTableHeight = alumnosHeaderHeight + datos.alumnos.length * alumnosRowHeight;
 
   // Rectángulo completo tabla alumnos
@@ -224,12 +220,12 @@ for (let i = 0; i < datos.sesiones.length; i++) {
 
   // Filas tabla alumnos
   doc.setFont("helvetica", "normal");
-  let yFilaAlumnos = yAlumnos + alumnosHeaderHeight + 6;
+  let yFilaAlumnos = yAlumnos + alumnosHeaderHeight + alumnosRowHeight/2 + 2;
   datos.alumnos.forEach((a) => {
-    doc.text(String(a.numero), colsAlumnosX[0] + 3, yFilaAlumnos);
-    doc.text(a.nombre, colsAlumnosX[1] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[1] - 6 });
-    doc.text(a.equipos, colsAlumnosX[2] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[2] - 6 });
-    doc.text(a.observaciones, colsAlumnosX[3] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[3] - 6 });
+    doc.text(String(a.numero), colsAlumnosX[0] + 3, yFilaAlumnos, { baseline: 'middle' });
+    doc.text(a.nombre, colsAlumnosX[1] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[1] - 6, baseline: 'middle' });
+    doc.text(a.equipos, colsAlumnosX[2] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[2] - 6, baseline: 'middle' });
+    doc.text(a.observaciones, colsAlumnosX[3] + 3, yFilaAlumnos, { maxWidth: colsAlumnosWidths[3] - 6, baseline: 'middle' });
     yFilaAlumnos += alumnosRowHeight;
   });
 

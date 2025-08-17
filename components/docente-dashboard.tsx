@@ -162,6 +162,78 @@ export function DocenteDashboard({ user }: DocenteDashboardProps) {
 
   const [asigOpen, setAsigOpen] = useState(false)
 
+  // Datos de ejemplo para uso de laboratorios (solo si la lista está vacía)
+  const exampleUsosLaboratorio = [
+    {
+      id: 1,
+      numero_pc: '1',
+      laboratorio: 'Lab Computación 1',
+      asignatura: 'Aplicaciones Distribuidas',
+      docente: 'Ing. Juan Pérez',
+      guia: 'Guía 1',
+      equipos: 'Computador: HP ProDesk 600 G2 DM, Monitor, teclado, mouse',
+      horarios: '08:00 - 10:00',
+      estado: 'Finalizado',
+      alumno_responsable: 'ARAMBULO ROJAS EDISON ALEXANDER',
+      observaciones: 'Ninguna',
+    },
+    {
+      id: 2,
+      numero_pc: '2',
+      laboratorio: 'Lab Computación 1',
+      asignatura: 'Aplicaciones Distribuidas',
+      docente: 'Ing. Juan Pérez',
+      guia: 'Guía 1',
+      equipos: 'Computador: HP ProDesk 600 G2 DM, Monitor, teclado, mouse',
+      horarios: '08:00 - 10:00',
+      estado: 'Finalizado',
+      alumno_responsable: 'CHEVEZ BAZAN KARLOS GREGORY',
+      observaciones: 'Ninguna',
+    },
+    {
+      id: 3,
+      numero_pc: '3',
+      laboratorio: 'Lab Computación 1',
+      asignatura: 'Aplicaciones Distribuidas',
+      docente: 'Ing. Juan Pérez',
+      guia: 'Guía 1',
+      equipos: 'Computador: HP ProDesk 600 G2 DM, Monitor, teclado, mouse',
+      horarios: '08:00 - 10:00',
+      estado: 'Finalizado',
+      alumno_responsable: 'DIAZ VALDEZ NICOLE JAMILEX',
+      observaciones: 'Ninguna',
+    },
+    {
+      id: 4,
+      numero_pc: '4',
+      laboratorio: 'Lab Computación 1',
+      asignatura: 'Aplicaciones Distribuidas',
+      docente: 'Ing. Juan Pérez',
+      guia: 'Guía 1',
+      equipos: 'Computador: HP ProDesk 600 G2 DM, Monitor, teclado, mouse',
+      horarios: '08:00 - 10:00',
+      estado: 'Finalizado',
+      alumno_responsable: 'GONZALEZ ORELLANA ADRIANA PAMELA',
+      observaciones: 'Ninguna',
+    },
+    {
+      id: 5,
+      numero_pc: '5',
+      laboratorio: 'Lab Computación 1',
+      asignatura: 'Aplicaciones Distribuidas',
+      docente: 'Ing. Juan Pérez',
+      guia: 'Guía 1',
+      equipos: 'Computador: HP ProDesk 600 G2 DM, Monitor, teclado, mouse',
+      horarios: '08:00 - 10:00',
+      estado: 'Finalizado',
+      alumno_responsable: 'GUAMAN TOBAR JHON STEEVEN',
+      observaciones: 'Ninguna',
+    },
+  ];
+
+  // Si no hay datos reales, usar los de ejemplo
+  const usosLaboratorioToShow = usosLaboratorio && usosLaboratorio.length > 0 ? usosLaboratorio : exampleUsosLaboratorio;
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -509,22 +581,22 @@ const match = typeof m.avance === 'string' ? m.avance.match(/(\d+)%/) : null;   
                             revision: "UPDI 2025-ene-13",
                             fecha: new Date().toLocaleDateString(),
                             pagina: "1 de 1",
-                            laboratorio: usosLaboratorio[0]?.laboratorio || "Laboratorio X",
+                            laboratorio: usosLaboratorioToShow[0]?.laboratorio || "Laboratorio X",
                             departamento: "Departamento de Ciencias de la Computación",
-                            profesor: usosLaboratorio[0]?.docente || "Nombre del docente",
-                            tema: usosLaboratorio[0]?.guia || "Tema de la práctica",
+                            profesor: usosLaboratorioToShow[0]?.docente || "Nombre del docente",
+                            tema: usosLaboratorioToShow[0]?.guia || "Tema de la práctica",
                             objetivo: "Consumir una API RESTful pública o local desde una aplicación frontend.",
                             sesiones: [
                               {
-                                fecha: usosLaboratorio[0]?.fecha || "",
+                                fecha: usosLaboratorioToShow[0]?.fecha || "",
                                 nrc: "23128",
-                                alumnos: usosLaboratorio.length,
+                                alumnos: usosLaboratorioToShow.length,
                                 firmaProfesor: ""
                               }
                             ],
-                            alumnos: usosLaboratorio.map((u: any, idx: number) => ({
-                              numero: idx + 1,
-                              nombre: u.estudiante || "-",
+                            alumnos: usosLaboratorioToShow.map((u: any, idx: number) => ({
+                              numero: u.numero_pc || u.id || idx + 1,
+                              nombre: u.alumno_responsable || u.estudiante || "-",
                               equipos: u.equipos || "N/A",
                               observaciones: u.observaciones || "Ninguna"
                             }))
@@ -564,27 +636,19 @@ const match = typeof m.avance === 'string' ? m.avance.match(/(\d+)%/) : null;   
                         <table className="min-w-full text-sm border">
                           <thead className="bg-gray-100">
                             <tr>
-                              <th className="px-3 py-2 border">Fecha</th>
-                              <th className="px-3 py-2 border">Laboratorio</th>
-                              <th className="px-3 py-2 border">Asignatura</th>
-                              <th className="px-3 py-2 border">Docente</th>
-                              <th className="px-3 py-2 border">Guía Ejecutada</th>
-                              <th className="px-3 py-2 border">Equipos</th>
-                              <th className="px-3 py-2 border">Horarios</th>
-                              <th className="px-3 py-2 border">Estado</th>
+                              <th className="px-3 py-2 border">N°</th>
+                              <th className="px-3 py-2 border">Alumno responsable</th>
+                              <th className="px-3 py-2 border">Equipos entregados</th>
+                              <th className="px-3 py-2 border">Observaciones/Novedades</th>
                             </tr>
                           </thead>
                           <tbody>
-                            {usosLaboratorio.map((u) => (
+                            {usosLaboratorioToShow.map((u, idx) => (
                               <tr key={u.id}>
-                                <td className="px-3 py-2 border">{u.fecha}</td>
-                                <td className="px-3 py-2 border">{u.laboratorio}</td>
-                                <td className="px-3 py-2 border">{u.asignatura}</td>
-                                <td className="px-3 py-2 border">{u.docente}</td>
-                                <td className="px-3 py-2 border">{u.guia}</td>
+                                <td className="px-3 py-2 border">{u.numero_pc || u.id || idx + 1}</td>
+                                <td className="px-3 py-2 border">{u.alumno_responsable || u.estudiante}</td>
                                 <td className="px-3 py-2 border">{u.equipos}</td>
-                                <td className="px-3 py-2 border">{u.horarios}</td>
-                                <td className="px-3 py-2 border">{u.estado}</td>
+                                <td className="px-3 py-2 border">{u.observaciones || '-'}</td>
                               </tr>
                             ))}
                           </tbody>
