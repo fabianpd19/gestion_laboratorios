@@ -1,5 +1,5 @@
-const { DataTypes } = require("sequelize")
-const { sequelize } = require("../../config/db")
+const { DataTypes } = require("sequelize");
+const { sequelize } = require("../../config/db");
 
 const GuiaLaboratorio = sequelize.define(
   "GuiaLaboratorio",
@@ -37,11 +37,31 @@ const GuiaLaboratorio = sequelize.define(
         key: "id",
       },
     },
+    parcial: {
+      type: DataTypes.ENUM("1", "2", "3"),
+      allowNull: false,
+    },
+    archivo_pdf: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    habilitada: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+    hora_inicio: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    hora_fin: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
   },
   {
     tableName: "guias_laboratorio",
     timestamps: true,
-  },
-)
+  }
+);
 
-module.exports = GuiaLaboratorio
+module.exports = GuiaLaboratorio;
