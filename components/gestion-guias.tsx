@@ -30,6 +30,7 @@ interface Guia {
   descripcion?: string;
   parcial: string;
   archivo_pdf?: string | null;
+  habilitada?: boolean | "f";
   laboratorio_nombre?: string;
   created_at?: string;
 }
@@ -148,6 +149,42 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleEstadoGuia = async (id: number, habilitadaActual?: boolean) => {
+    const nuevaHabilitada = !habilitadaActual;
+    try {
+      const res = await fetch(
+        `http://localhost:3001/api/guias-laboratorio/${id}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ habilitada: nuevaHabilitada }),
+        }
+      );
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast({
+          title: "✅ Estado actualizado",
+          description: `La guía ahora está ${
+            nuevaHabilitada ? "habilitada" : "deshabilitada"
+          }`,
+        });
+        fetchGuias(); // refrescar lista
+      } else {
+        throw new Error(data.message || "No se pudo actualizar el estado");
+      }
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Error de conexión con el servidor",
+        variant: "destructive",
+      });
     }
   };
 
@@ -587,6 +624,40 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
                         </div>
                       </div>
 
+                      <span
+                        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          guia.habilitada === false
+                            ? "bg-green-100 text-green-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {guia.habilitada === true || guia.habilitada === "t"
+                          ? "Habilitada"
+                          : "Deshabilitada"}
+                      </span>
+
+                      <div className="flex items-center gap-2 ml-4">
+                        {user?.role === "docente" && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() =>
+                              toggleEstadoGuia(guia.id, guia.habilitada)
+                            }
+                            className={`${
+                              guia.habilitada === true ||
+                              guia.habilitada === "t"
+                                ? "text-gray-700 border-gray-700 hover:bg-gray-50"
+                                : "text-green-600 border-green-600 hover:bg-green-50"
+                            }`}
+                          >
+                            {guia.habilitada === true || guia.habilitada === "t"
+                              ? "Deshabilitar"
+                              : "Habilitar"}
+                          </Button>
+                        )}
+                      </div>
+
                       <div className="flex items-center gap-2 ml-4">
                         {guia.archivo_pdf && (
                           <Button
@@ -598,8 +669,7 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
                             }
                             className="text-blue-600 border-blue-600 hover:bg-blue-50"
                           >
-                            <Download className="h-4 w-4 mr-1" />
-                            Descargar
+                            <Download className="h-4 w-4" />
                           </Button>
                         )}
 
@@ -610,8 +680,7 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
                             onClick={() => handleDelete(guia.id)}
                             className="text-red-600 border-red-600 hover:bg-red-50"
                           >
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Eliminar
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         )}
                       </div>
