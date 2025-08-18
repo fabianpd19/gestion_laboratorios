@@ -37,6 +37,11 @@ const GuiaLaboratorio = sequelize.define(
         key: "id",
       },
     },
+    estado: {
+      type: DataTypes.ENUM("activa", "inactiva", "archivada"),
+      allowNull: false,
+      defaultValue: "activa",
+    },
   },
   {
     tableName: "guias_laboratorio",

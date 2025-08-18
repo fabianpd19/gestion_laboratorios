@@ -8,6 +8,12 @@ interface Guia {
   asignatura_id: number
   docente_id: number
   createdAt: string
+  estado: string
+}
+
+interface Equipo {
+  id: number
+  nombre: string
 }
 
 interface EquipoFormProps {
@@ -18,25 +24,18 @@ interface EquipoFormProps {
 
 export function EquipoForm({ guias, onClose, onSubmit }: EquipoFormProps) {
   const [guiaId, setGuiaId] = useState("")
+  const [equiposDisponibles, setEquiposDisponibles] = useState<Equipo[]>([])
+
   const [form, setForm] = useState({
-    nombre: "",
-    descripcion: "",
-    marca: "",
-    modelo: "",
-    numero_serie: "",
-    codigo_inventario: "",
-    estado: "disponible",
-    fecha_adquisicion: "",
-    valor_adquisicion: "",
-    observaciones: "",
-    laboratorio_id: "",
-    asignatura_id: "",
-    docente_id: "",
-    createdAt: "",
+    guia_id: "",
+    equipo_id: "",
+    observaciones: ""
   })
 
+  // Cuando cambia la guía, llenamos datos y pedimos equipos disponibles
   useEffect(() => {
     if (!guiaId) return
+
     const guia = guias.find((g) => g.id === Number(guiaId))
     if (guia) {
       setForm((prev) => ({
@@ -49,14 +48,50 @@ export function EquipoForm({ guias, onClose, onSubmit }: EquipoFormProps) {
     }
   }, [guiaId, guias])
 
+  // Cargar equipos disponibles al montar el componente
+  useEffect(() => {
+  const token = localStorage.getItem("token") // o donde lo guardes
+
+  fetch(`http://localhost:3001/api/equipos`, {
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`, // Enviamos el token
+    },
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (Array.isArray(data)) {
+        setEquiposDisponibles(data)
+      } else if (Array.isArray(data.data)) {
+        setEquiposDisponibles(data.data)
+      } else {
+        console.error("Formato inesperado:", data)
+        setEquiposDisponibles([])
+      }
+    })
+    .catch((err) => console.error("Error cargando equipos:", err))
+}, [])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
+    if (name === "guia_id") {
+      setGuiaId(value) // Actualizar también guiaId cuando cambie guia_id
+    }
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onSubmit(form)
+    
+    // Mapear los datos del formulario a la nueva estructura
+    const mappedData = {
+      nombre: equiposDisponibles.find(eq => eq.id === Number(form.equipo_id))?.nombre || "",
+      id_guia: Number(guiaId), // Usar guiaId en lugar de form.guia_id
+      observacion: form.observaciones || "",
+      estado: "disponible" // Valor por defecto
+    }
+    
+    onSubmit(mappedData)
   }
 
   return (
@@ -64,92 +99,58 @@ export function EquipoForm({ guias, onClose, onSubmit }: EquipoFormProps) {
       <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
         <h2 className="text-xl font-bold mb-4">Agregar equipo de laboratorio</h2>
         <form onSubmit={handleSubmit} className="space-y-3">
+          
+          {/* SELECT de Guía */}
           <div>
             <label className="block text-sm font-medium">Guía</label>
             <select
+              name="guia_id"
               className="w-full border rounded px-2 py-1"
               value={guiaId}
-              onChange={(e) => setGuiaId(e.target.value)}
+              onChange={handleChange}
               required
             >
               <option value="">Seleccione una guía</option>
-              {guias.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.titulo}
+              {guias
+                .filter((g) => g.estado === "activa")
+                .map((g) => (
+                  <option key={g.id} value={g.id}>
+                    {g.titulo}
+                  </option>
+                ))}
+            </select>
+          </div>
+
+          {/* SELECT de equipos */}
+          <div>
+            <label className="block text-xs">Equipo</label>
+            <select
+              name="equipo_id"
+              className="w-full border rounded px-2 py-1"
+              value={form.equipo_id}
+              onChange={handleChange}
+              required
+            >
+              <option value="">Seleccione un equipo</option>
+              {equiposDisponibles.map((eq) => (
+                <option key={eq.id} value={eq.id}>
+                  {eq.nombre}
                 </option>
               ))}
             </select>
           </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs">Asignatura</label>
-              <input className="w-full border rounded px-2 py-1 bg-gray-100" value={form.asignatura_id} disabled />
-            </div>
-            <div>
-              <label className="block text-xs">Laboratorio</label>
-              <input className="w-full border rounded px-2 py-1 bg-gray-100" value={form.laboratorio_id} disabled />
-            </div>
-            <div>
-              <label className="block text-xs">Docente</label>
-              <input className="w-full border rounded px-2 py-1 bg-gray-100" value={form.docente_id} disabled />
-            </div>
-            <div>
-              <label className="block text-xs">Fecha Guía</label>
-              <input className="w-full border rounded px-2 py-1 bg-gray-100" value={form.createdAt} disabled />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs">Nombre del equipo</label>
-            <input name="nombre" className="w-full border rounded px-2 py-1" value={form.nombre} onChange={handleChange} required />
-          </div>
-          <div>
-            <label className="block text-xs">Descripción</label>
-            <input name="descripcion" className="w-full border rounded px-2 py-1" value={form.descripcion} onChange={handleChange} />
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs">Marca</label>
-              <input name="marca" className="w-full border rounded px-2 py-1" value={form.marca} onChange={handleChange} />
-            </div>
-            <div>
-              <label className="block text-xs">Modelo</label>
-              <input name="modelo" className="w-full border rounded px-2 py-1" value={form.modelo} onChange={handleChange} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs">Número de serie</label>
-              <input name="numero_serie" className="w-full border rounded px-2 py-1" value={form.numero_serie} onChange={handleChange} />
-            </div>
-            <div>
-              <label className="block text-xs">Código inventario</label>
-              <input name="codigo_inventario" className="w-full border rounded px-2 py-1" value={form.codigo_inventario} onChange={handleChange} />
-            </div>
-          </div>
-          <div>
-            <label className="block text-xs">Estado</label>
-            <select name="estado" className="w-full border rounded px-2 py-1" value={form.estado} onChange={handleChange}>
-              <option value="disponible">Disponible</option>
-              <option value="en_uso">En uso</option>
-              <option value="mantenimiento">Mantenimiento</option>
-              <option value="dañado">Dañado</option>
-              <option value="fuera_servicio">Fuera de servicio</option>
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div>
-              <label className="block text-xs">Fecha adquisición</label>
-              <input name="fecha_adquisicion" type="date" className="w-full border rounded px-2 py-1" value={form.fecha_adquisicion} onChange={handleChange} />
-            </div>
-            <div>
-              <label className="block text-xs">Valor adquisición</label>
-              <input name="valor_adquisicion" type="number" className="w-full border rounded px-2 py-1" value={form.valor_adquisicion} onChange={handleChange} />
-            </div>
-          </div>
+
+          {/* Observaciones */}
           <div>
             <label className="block text-xs">Observaciones</label>
-            <input name="observaciones" className="w-full border rounded px-2 py-1" value={form.observaciones} onChange={handleChange} />
+            <input
+              name="observaciones"
+              className="w-full border rounded px-2 py-1"
+              value={form.observaciones}
+              onChange={handleChange}
+            />
           </div>
+
           <div className="flex justify-end gap-2 mt-4">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
             <Button type="submit">Guardar equipo</Button>

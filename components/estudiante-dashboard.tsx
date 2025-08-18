@@ -93,17 +93,7 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
   const handleEquipoSubmit = async (form: any) => {
     const token = localStorage.getItem("token")
 
-    // 1. Guardar en equipos
-    const resEquipos = await fetch("http://localhost:3001/api/equipos", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify(form),
-    })
-
-    // 2. Guardar en equipos_laboratorio
+    // 1. Guardar en equipos_laboratorio
     const resEquiposLab = await fetch("http://localhost:3001/api/equipos-laboratorio", {
       method: "POST",
       headers: {
@@ -113,11 +103,11 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
       body: JSON.stringify(form),
     })
 
-    if (resEquipos.ok && resEquiposLab.ok) {
+    if (resEquiposLab.ok) {
       Swal.fire({
         icon: 'success',
         title: 'Éxito',
-        text: 'Equipo agregado correctamente en ambas tablas',
+        text: 'Equipo agregado correctamente en la tabla de equipos de laboratorio',
       });
       setShowEquipoForm(false);
     } else {
@@ -202,14 +192,10 @@ export function EstudianteDashboard({ user }: EstudianteDashboardProps) {
                 </CardHeader>
                 <CardContent>
                   <Button className="w-full" onClick={() => setShowEquipoForm(true)}>
-                    Agregar equipo de laboratorio
+                    Seleccionar el equipo
                   </Button>
                 </CardContent>
-                <CardContent>
-                  <Button className="w-full" >
-                    Mirar registros de equipos
-                  </Button>
-                </CardContent>
+               
               </Card>
             </div>
 
