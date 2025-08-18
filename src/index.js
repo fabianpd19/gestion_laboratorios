@@ -12,27 +12,31 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // ==================== MIDDLEWARES ====================
-app.use(cors({
-  origin: process.env.FRONTEND_URL || "http://localhost:3000",
-  credentials: true,
-  optionsSuccessStatus: 200
-}));
+app.use(
+  cors({
+    origin: process.env.FRONTEND_URL || "http://localhost:3000",
+    credentials: true,
+    optionsSuccessStatus: 200,
+  })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-
 // Configuración de sesión para Passport (OAuth2)
-app.use(session({
-  secret: process.env.SESSION_SECRET || process.env.JWT_SECRET || 'fallback_secret',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production',
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 horas
-  }
-}));
+app.use(
+  session({
+    secret:
+      process.env.SESSION_SECRET || process.env.JWT_SECRET || "fallback_secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: process.env.NODE_ENV === "production",
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 horas
+    },
+  })
+);
 
 // Inicializar Passport
 app.use(passport.initialize());
@@ -48,6 +52,9 @@ const bitacoraRoutes = require("./routes/bitacora.routes");
 const inscripcionAsignaturaRoutes = require("./routes/inscripcionAsignatura.routes");
 const equipoLaboratorioRoutes = require("./routes/equipoLaboratorio.routes");
 const docenteMateriaRoutes = require("./routes/docenteMateria.routes");
+const uploadRoutes = require("./routes/upload.routes");
+
+// ==================== MIDDLEWARE ====================
 
 // ==================== USAR RUTAS ====================
 app.use("/api/usuarios", usuarioRoutes);
@@ -59,7 +66,7 @@ app.use("/api/bitacoras", bitacoraRoutes);
 app.use("/api/inscripciones-asignaturas", inscripcionAsignaturaRoutes);
 app.use("/api/equipos-laboratorio", equipoLaboratorioRoutes);
 app.use("/api/docente-materias", docenteMateriaRoutes);
-
+app.use("/api/upload", uploadRoutes);
 
 // ==================== RUTA DE PRUEBA ====================
 app.get("/", (req, res) => {
@@ -73,7 +80,7 @@ app.get("/", (req, res) => {
         login: "/api/usuarios/login",
         google: "/api/usuarios/auth/google",
         verify: "/api/usuarios/verify",
-        logout: "/api/usuarios/logout"
+        logout: "/api/usuarios/logout",
       },
       laboratorios: "/api/laboratorios",
       asignaturas: "/api/asignaturas",
@@ -82,7 +89,7 @@ app.get("/", (req, res) => {
       bitacoras: "/api/bitacoras",
       inscripciones: "/api/inscripciones-asignaturas",
       equiposLaboratorio: "/api/equipos-laboratorio",
-      docenteMaterias: "/api/docente-materias"
+      docenteMaterias: "/api/docente-materias",
     },
   });
 });
@@ -91,23 +98,25 @@ app.get("/", (req, res) => {
 app.use((err, req, res, next) => {
   console.error("Error stack:", err.stack);
 
-  if (err.name === 'AuthenticationError') {
-    return res.status(401).json({ success: false, message: "Error de autenticación OAuth" });
+  if (err.name === "AuthenticationError") {
+    return res
+      .status(401)
+      .json({ success: false, message: "Error de autenticación OAuth" });
   }
-  if (err.name === 'JsonWebTokenError') {
+  if (err.name === "JsonWebTokenError") {
     return res.status(401).json({ success: false, message: "Token inválido" });
   }
-  if (err.name === 'SequelizeValidationError') {
+  if (err.name === "SequelizeValidationError") {
     return res.status(400).json({
       success: false,
       message: "Error de validación",
-      errors: err.errors.map(e => ({ field: e.path, message: e.message }))
+      errors: err.errors.map((e) => ({ field: e.path, message: e.message })),
     });
   }
   res.status(500).json({
     success: false,
     message: "Error interno del servidor",
-    ...(process.env.NODE_ENV === 'development' && { error: err.message })
+    ...(process.env.NODE_ENV === "development" && { error: err.message }),
   });
 });
 
@@ -129,7 +138,11 @@ const startServer = async () => {
       console.log(`🚀 Servidor corriendo en http://localhost:${PORT}`);
       console.log(`🔐 OAuth2 Google configurado`);
       console.log(`🛡️ Sistema de tokens únicos activo`);
-      console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
+      console.log(
+        `📱 Frontend URL: ${
+          process.env.FRONTEND_URL || "http://localhost:3000"
+        }`
+      );
     });
   } catch (error) {
     console.error("❌ Error al iniciar el servidor:", error);

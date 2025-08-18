@@ -51,6 +51,7 @@
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.294.0",
     "morgan": "^1.10.0",
+    "multer": "^2.0.2",
     "next": "14.0.4",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
