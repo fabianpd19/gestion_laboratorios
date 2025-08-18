@@ -21,6 +21,7 @@ import {
   Download,
   AlertCircle,
   Loader2,
+  Clock,
 } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -33,12 +34,17 @@ interface Guia {
   habilitada?: boolean | "f";
   laboratorio_nombre?: string;
   created_at?: string;
+  hora_inicio?: string;
+  hora_fin?: string;
 }
 
 interface FormErrors {
   titulo?: string;
   laboratorioId?: string;
   archivo?: string;
+  hora_inicio?: string;
+  hora_fin?: string;
+  horarios?: string;
 }
 
 export default function GestionGuias({ materiaId }: { materiaId: number }) {
@@ -54,10 +60,29 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
   const [archivo, setArchivo] = useState<File | null>(null);
   const [laboratorios, setLaboratorios] = useState<any[]>([]);
   const [laboratorioId, setLaboratorioId] = useState("");
+  const [horaInicio, setHoraInicio] = useState("");
+  const [horaFin, setHoraFin] = useState("");
   const [errors, setErrors] = useState<FormErrors>({});
 
   // Obtener el id del docente desde el contexto de usuario
   const docenteId = user && user.id ? user.id : null;
+
+  // Función para validar formato de hora
+  const isValidTime = (time: string): boolean => {
+    const timeRegex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return timeRegex.test(time);
+  };
+
+  // Función para comparar horas
+  const isTimeAfter = (startTime: string, endTime: string): boolean => {
+    const [startHour, startMin] = startTime.split(":").map(Number);
+    const [endHour, endMin] = endTime.split(":").map(Number);
+
+    const startMinutes = startHour * 60 + startMin;
+    const endMinutes = endHour * 60 + endMin;
+
+    return endMinutes > startMinutes;
+  };
 
   // Validación del formulario
   const validateForm = (): boolean => {
@@ -75,6 +100,34 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
     // Validar laboratorio
     if (!laboratorioId) {
       newErrors.laboratorioId = "Debe seleccionar un laboratorio";
+    }
+
+    // Validar horarios
+    if (horaInicio && !isValidTime(horaInicio)) {
+      newErrors.hora_inicio = "Formato de hora inválido (HH:MM)";
+    }
+
+    if (horaFin && !isValidTime(horaFin)) {
+      newErrors.hora_fin = "Formato de hora inválido (HH:MM)";
+    }
+
+    // Validar que la hora de fin sea posterior a la hora de inicio
+    if (
+      horaInicio &&
+      horaFin &&
+      isValidTime(horaInicio) &&
+      isValidTime(horaFin)
+    ) {
+      if (!isTimeAfter(horaInicio, horaFin)) {
+        newErrors.horarios =
+          "La hora de fin debe ser posterior a la hora de inicio";
+      }
+    }
+
+    // Validar que si se proporciona una hora, se proporcionen ambas
+    if ((horaInicio && !horaFin) || (!horaInicio && horaFin)) {
+      newErrors.horarios =
+        "Debe proporcionar tanto la hora de inicio como la hora de fin";
     }
 
     // Validar archivo
@@ -127,6 +180,7 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
           headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       if (!res.ok) {
         const data = await res.json();
         alert(data.message || "Error al descargar");
@@ -154,6 +208,7 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
 
   const toggleEstadoGuia = async (id: number, habilitadaActual?: boolean) => {
     const nuevaHabilitada = !habilitadaActual;
+
     try {
       const res = await fetch(
         `http://localhost:3001/api/guias-laboratorio/${id}`,
@@ -211,6 +266,7 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
         });
       }
     };
+
     fetchLaboratorios();
   }, [token]);
 
@@ -229,7 +285,6 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
       });
 
       const data = await response.json();
-
       if (response.ok && data.success) {
         return data.data.filePath; // Acceder a la ruta desde data.data.filePath
       } else {
@@ -243,7 +298,6 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!validateForm()) {
       toast({
         title: "Error de validación",
@@ -257,10 +311,37 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
 
     try {
       let archivo_pdf_path = null;
-
       // Subir archivo si existe
       if (archivo) {
         archivo_pdf_path = await uploadFile(archivo);
+      }
+
+      // Preparar las horas para envío al backend
+      let hora_inicio_date = null;
+      let hora_fin_date = null;
+
+      if (horaInicio && horaFin) {
+        // Crear fechas con la hora actual y la hora especificada
+        const today = new Date();
+        const [horaInicioHour, horaInicioMin] = horaInicio
+          .split(":")
+          .map(Number);
+        const [horaFinHour, horaFinMin] = horaFin.split(":").map(Number);
+
+        hora_inicio_date = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+          horaInicioHour,
+          horaInicioMin
+        );
+        hora_fin_date = new Date(
+          today.getFullYear(),
+          today.getMonth(),
+          today.getDate(),
+          horaFinHour,
+          horaFinMin
+        );
       }
 
       const payload = {
@@ -272,6 +353,8 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
         docente_id: docenteId,
         estado: "borrador",
         archivo_pdf: archivo_pdf_path,
+        hora_inicio: hora_inicio_date,
+        hora_fin: hora_fin_date,
       };
 
       const res = await fetch("http://localhost:3001/api/guias-laboratorio", {
@@ -284,7 +367,6 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
       });
 
       const data = await res.json();
-
       if (res.ok && data.success) {
         toast({
           title: "✅ Guía creada exitosamente",
@@ -297,6 +379,8 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
         setParcial("1");
         setLaboratorioId("");
         setArchivo(null);
+        setHoraInicio("");
+        setHoraFin("");
         setErrors({});
 
         // Limpiar input file
@@ -365,6 +449,16 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
     const sizes = ["Bytes", "KB", "MB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
+  };
+
+  const formatTime = (dateString?: string): string => {
+    if (!dateString) return "No definido";
+    const date = new Date(dateString);
+    return date.toLocaleTimeString("es-ES", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   };
 
   return (
@@ -520,6 +614,108 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
               </div>
             </div>
 
+            {/* Horarios */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 text-gray-600" />
+                <Label className="text-sm font-semibold text-gray-700">
+                  Horarios de la Guía (Opcional)
+                </Label>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Hora Inicio */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="horaInicio"
+                    className="text-sm font-medium text-gray-600"
+                  >
+                    Hora de Inicio
+                  </Label>
+                  <Input
+                    id="horaInicio"
+                    type="time"
+                    value={horaInicio}
+                    onChange={(e) => {
+                      setHoraInicio(e.target.value);
+                      if (errors.hora_inicio || errors.horarios) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          hora_inicio: undefined,
+                          horarios: undefined,
+                        }));
+                      }
+                    }}
+                    className={`transition-all ${
+                      errors.hora_inicio || errors.horarios
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    }`}
+                    placeholder="HH:MM"
+                  />
+                  {errors.hora_inicio && (
+                    <p className="text-red-500 text-sm flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.hora_inicio}
+                    </p>
+                  )}
+                </div>
+
+                {/* Hora Fin */}
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="horaFin"
+                    className="text-sm font-medium text-gray-600"
+                  >
+                    Hora de Fin
+                  </Label>
+                  <Input
+                    id="horaFin"
+                    type="time"
+                    value={horaFin}
+                    onChange={(e) => {
+                      setHoraFin(e.target.value);
+                      if (errors.hora_fin || errors.horarios) {
+                        setErrors((prev) => ({
+                          ...prev,
+                          hora_fin: undefined,
+                          horarios: undefined,
+                        }));
+                      }
+                    }}
+                    className={`transition-all ${
+                      errors.hora_fin || errors.horarios
+                        ? "border-red-500 focus:ring-red-200"
+                        : "focus:ring-blue-200"
+                    }`}
+                    placeholder="HH:MM"
+                  />
+                  {errors.hora_fin && (
+                    <p className="text-red-500 text-sm flex items-center gap-1">
+                      <AlertCircle className="h-4 w-4" />
+                      {errors.hora_fin}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {errors.horarios && (
+                <p className="text-red-500 text-sm flex items-center gap-1">
+                  <AlertCircle className="h-4 w-4" />
+                  {errors.horarios}
+                </p>
+              )}
+
+              {horaInicio && horaFin && !errors.horarios && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                  <p className="text-sm text-green-700 flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Duración: {horaInicio} - {horaFin}
+                  </p>
+                </div>
+              )}
+            </div>
+
             {/* Descripción */}
             <div className="space-y-2">
               <Label
@@ -604,13 +800,11 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
                             Parcial {guia.parcial}
                           </span>
                         </div>
-
                         {guia.descripcion && (
                           <p className="text-gray-600 text-sm mb-3 line-clamp-2">
                             {guia.descripcion}
                           </p>
                         )}
-
                         <div className="flex items-center gap-4 text-xs text-gray-500">
                           {guia.laboratorio_nombre && (
                             <span>📍 {guia.laboratorio_nombre}</span>
@@ -621,9 +815,15 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
                               {new Date(guia.created_at).toLocaleDateString()}
                             </span>
                           )}
+                          {(guia.hora_inicio || guia.hora_fin) && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {formatTime(guia.hora_inicio)} -{" "}
+                              {formatTime(guia.hora_fin)}
+                            </span>
+                          )}
                         </div>
                       </div>
-
                       <span
                         className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
                           guia.habilitada === false
@@ -635,7 +835,6 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
                           ? "Habilitada"
                           : "Deshabilitada"}
                       </span>
-
                       <div className="flex items-center gap-2 ml-4">
                         {user?.role === "docente" && (
                           <Button
@@ -657,7 +856,6 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
                           </Button>
                         )}
                       </div>
-
                       <div className="flex items-center gap-2 ml-4">
                         {guia.archivo_pdf && (
                           <Button
@@ -672,7 +870,6 @@ export default function GestionGuias({ materiaId }: { materiaId: number }) {
                             <Download className="h-4 w-4" />
                           </Button>
                         )}
-
                         {user?.role === "docente" && (
                           <Button
                             variant="outline"
